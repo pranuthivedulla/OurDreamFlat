@@ -8,6 +8,7 @@ import {
   hasSubmitted,
   loadDemoListings,
   searchExists,
+  startLiveFetch,
   submitResponse,
 } from '@/lib/db'
 import { isPerson, validateResponse, type ResponseInput } from '@/lib/constraints'
@@ -88,5 +89,18 @@ export async function loadDemoListingsAction(formData: FormData): Promise<void> 
   const searchId = String(formData.get('searchId') ?? '')
   if (!(await searchExists(searchId))) return
   await loadDemoListings(searchId)
+  revalidatePath(`/s/${searchId}`)
+}
+
+/**
+ * Start a live scrape for this search. THIS SPENDS APIFY CREDITS -- about 4-5
+ * US cents per run of 15 listings.
+ */
+export async function fetchLiveListingsAction(formData: FormData): Promise<void> {
+  const searchId = String(formData.get('searchId') ?? '')
+  const source = String(formData.get('source') ?? '')
+  if (!(await searchExists(searchId))) return
+  if (source !== 'magicbricks' && source !== 'nobroker') return
+  await startLiveFetch(searchId, source)
   revalidatePath(`/s/${searchId}`)
 }

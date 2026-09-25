@@ -2,12 +2,12 @@ import { headers } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { loadDemoListingsAction } from '@/app/actions'
+import { fetchLiveListingsAction, loadDemoListingsAction } from '@/app/actions'
 import { AutoRefresh } from '@/app/components/auto-refresh'
 import { CopyLink } from '@/app/components/copy-link'
 import { Results } from '@/app/components/results'
 import { PEOPLE, personName } from '@/lib/constraints'
-import { getListings, getResponses, getStatus } from '@/lib/db'
+import { getListings, getResponses, getStatus, pollLiveFetch } from '@/lib/db'
 import { buildShortlist } from '@/lib/filter'
 
 export const dynamic = 'force-dynamic'
@@ -33,6 +33,10 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
   // Answers are read only once all three are in, and only to compute the
   // shortlist. Before that the page holds names and nothing else.
   const everyoneIn = status.submitted.length === PEOPLE.length
+  // While a scrape is outstanding this checks it and ingests the results once
+  // it finishes. Reading a run costs nothing; only starting one spends credits.
+  const fetchState = everyoneIn ? await pollLiveFetch(id) : ({ state: 'idle' } as const)
+
   const [responses, listings] = everyoneIn
     ? await Promise.all([getResponses(id), getListings(id)])
     : [[], []]
@@ -43,7 +47,7 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:py-16">
       {/* Stops polling once all three are in -- there is nothing left to wait for. */}
-      <AutoRefresh stop={done === total} />
+      <AutoRefresh stop={done === total && fetchState.state !== 'running'} />
 
       <div className="card p-6 sm:p-10">
         <p className="field-label">Your flat search</p>
@@ -86,19 +90,60 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
 
       {done === total && (
         <div className="card mt-6 p-6 sm:p-10">
-          {listings.length === 0 ? (
+          {fetchState.state === 'running' ? (
+            <>
+              <h2 className="text-2xl font-extrabold tracking-tight">Fetching flats…</h2>
+              <p className="mt-2 text-ink-soft">
+                Pulling live rentals in Pune. This takes a minute or two; the page
+                checks by itself and the shortlist appears when they land.
+              </p>
+            </>
+          ) : listings.length === 0 ? (
             <>
               <h2 className="text-2xl font-extrabold tracking-tight">No flats to filter yet</h2>
+              {fetchState.state === 'failed' && (
+                <p className="mt-3 rounded-2xl bg-warn-bg p-4 text-sm font-medium text-warn-ink">
+                  That didn&rsquo;t work &mdash; {fetchState.why}. Try the other portal, or
+                  use the demo flats.
+                </p>
+              )}
               <p className="mt-2 text-ink-soft">
-                Add the demo flats and the shortlist appears here. They are stand-ins with
-                the same shape as scraped NoBroker listings.
+                Pull live rentals from a portal, or use the demo flats &mdash; stand-ins
+                with the same shape as scraped listings.
               </p>
-              <form action={loadDemoListingsAction} className="mt-6">
-                <input type="hidden" name="searchId" value={id} />
-                <button type="submit" className="btn-primary">
-                  Load the demo flats
-                </button>
-              </form>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <form action={fetchLiveListingsAction}>
+                  <input type="hidden" name="searchId" value={id} />
+                  <input type="hidden" name="source" value="magicbricks" />
+                  <button type="submit" className="btn-primary">
+                    Fetch live flats · MagicBricks
+                  </button>
+                </form>
+                <form action={fetchLiveListingsAction}>
+                  <input type="hidden" name="searchId" value={id} />
+                  <input type="hidden" name="source" value="nobroker" />
+                  <button
+                    type="submit"
+                    className="rounded-full border border-line bg-field px-6 py-3.5 text-sm font-bold text-ink-soft transition hover:border-ink-faint hover:text-ink"
+                  >
+                    NoBroker instead
+                  </button>
+                </form>
+                <form action={loadDemoListingsAction}>
+                  <input type="hidden" name="searchId" value={id} />
+                  <button
+                    type="submit"
+                    className="rounded-full border border-line bg-field px-6 py-3.5 text-sm font-bold text-ink-soft transition hover:border-ink-faint hover:text-ink"
+                  >
+                    Use demo flats
+                  </button>
+                </form>
+              </div>
+              <p className="mt-3 text-xs text-ink-faint">
+                A live fetch pulls 15 listings and costs a few pence of Apify credit.
+                The demo flats cost nothing.
+              </p>
             </>
           ) : (
             <Results result={buildShortlist(responses, listings)} />

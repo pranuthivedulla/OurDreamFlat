@@ -25,3 +25,7 @@ yarn-debug.log*
 yarn-error.log*
 .idea/
 *.tsbuildinfo
+
+# scratch from live scraper runs
+.run-id
+.live-sample.json

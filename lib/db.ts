@@ -5,7 +5,14 @@ import { randomInt } from 'crypto'
 import { getSupabase } from './supabase'
 import { PEOPLE, type Person, type ResponseInput } from './constraints'
 import type { Listing, Response as FilterResponse } from './filter'
-import { getDemoListings, mapListing } from './listings-source'
+import {
+  fetchRunItems,
+  getDemoListings,
+  getRunState,
+  mapListing,
+  startApifyRun,
+  type ListingSource,
+} from './listings-source'
 
 // No 0/O/1/I/l -- these get read aloud and retyped from WhatsApp.
 const TOKEN_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'
@@ -169,4 +176,68 @@ export async function loadDemoListings(searchId: string): Promise<number> {
   const { error } = await sb.from('listings').insert(rows)
   if (error) throw new Error(`Could not add listings: ${error.message}`)
   return rows.length
+}
+
+/** Kick off a live fetch and remember the run against this search. */
+export async function startLiveFetch(searchId: string, source: ListingSource): Promise<void> {
+  const { runId, datasetId } = await startApifyRun(source, { city: 'Pune', maxResults: 15 })
+  const { error } = await getSupabase()
+    .from('searches')
+    .update({ apify_run_id: runId, apify_dataset_id: datasetId, listings_source: source })
+    .eq('id', searchId)
+  if (error) throw new Error(`Could not save the run: ${error.message}`)
+}
+
+export type LiveFetch = { state: 'idle' } | { state: 'running' } | { state: 'failed'; why: string }
+
+/**
+ * Called on every status-page render while a run is outstanding. Checks the
+ * run, and once it has finished, ingests the dataset and clears the run so it
+ * is never ingested twice. Reading a run and its dataset costs nothing; only
+ * starting one spends credits.
+ */
+export async function pollLiveFetch(searchId: string): Promise<LiveFetch> {
+  const sb = getSupabase()
+  const { data, error } = await sb
+    .from('searches')
+    .select('apify_run_id, apify_dataset_id, listings_source')
+    .eq('id', searchId)
+    .maybeSingle()
+  if (error) throw new Error(`Could not read the run: ${error.message}`)
+  if (!data?.apify_run_id) return { state: 'idle' }
+
+  const state = await getRunState(data.apify_run_id)
+  if (state === 'RUNNING' || state === 'READY') return { state: 'running' }
+
+  // Clear the run first, so a failure cannot leave the page polling for ever.
+  await sb
+    .from('searches')
+    .update({ apify_run_id: null, apify_dataset_id: null })
+    .eq('id', searchId)
+
+  if (state !== 'SUCCEEDED') return { state: 'failed', why: `the scraper run ${state.toLowerCase()}` }
+
+  const items = await fetchRunItems(data.apify_dataset_id as string)
+  if (items.length === 0) return { state: 'failed', why: 'the scraper returned no listings' }
+
+  await sb.from('listings').delete().eq('search_id', searchId)
+  const rows = items.map((raw) => {
+    const mapped = mapListing(raw)
+    return {
+      search_id: searchId,
+      source: 'apify' as const,
+      url: mapped.url,
+      rent: mapped.rent,
+      area: mapped.area,
+      floor: mapped.floor,
+      has_lift: mapped.has_lift,
+      parking: mapped.parking,
+      bathrooms: mapped.bathrooms,
+      pet_friendly: mapped.pet_friendly,
+      extras: mapped.extras,
+    }
+  })
+  const { error: insertError } = await sb.from('listings').insert(rows)
+  if (insertError) throw new Error(`Could not save listings: ${insertError.message}`)
+  return { state: 'idle' }
 }

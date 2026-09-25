@@ -10,6 +10,10 @@ import { matchArea } from './geo'
  */
 export type RawListing = {
   listing_id?: string
+  /** MagicBricks only: a string like "1 Covered" or "2 Covered, 1 Open". */
+  parking?: string | boolean | null
+  /** MagicBricks only: a count, so a balcony is a number rather than a word match. */
+  balconies?: number
   title?: string
   bhk?: number
   bathrooms?: number
@@ -48,6 +52,20 @@ const LIFT_WORDS = ['lift', 'elevator']
 const PARKING_WORDS = ['parking', 'garage']
 
 /**
+ * MagicBricks returns parking as a free-text count, e.g. "2 Covered, 1 Open".
+ * Recognised wording means yes; anything unrecognised means NOT STATED, never
+ * no -- "None" is a truthy string and would otherwise read as parking.
+ */
+function parkingFromField(value: string | boolean | null | undefined): boolean | null {
+  if (typeof value === 'boolean') return value ? true : null
+  if (typeof value !== 'string') return null
+  const text = value.toLowerCase()
+  if (/(none|no parking|not available)/.test(text)) return false
+  if (/(covered|open|garage|basement|reserved|\d)/.test(text)) return true
+  return null
+}
+
+/**
  * An amenity list is evidence of what a flat HAS, never evidence of what it
  * lacks. A listing that does not mention a lift may still have one and simply
  * not say so, so absence maps to null -- "not stated" -- and the filter engine
@@ -66,10 +84,15 @@ export function mapListing(raw: RawListing): MappedListing {
   const match = matchArea(raw)
   if (match.areaId === null) unknowns.push(`area not identified: ${match.reason}`)
 
+  // MagicBricks never reports a lift -- its amenities array is internal numeric
+  // codes, not names -- so this is null for every MagicBricks listing by
+  // construction, not by oversight.
   const has_lift = amenityState(raw.amenities, LIFT_WORDS)
   if (has_lift === null) unknowns.push('lift not stated')
 
-  const parking = amenityState(raw.amenities, PARKING_WORDS)
+  // A dedicated field beats guessing from an amenity list, so prefer it.
+  const parking =
+    raw.parking !== undefined ? parkingFromField(raw.parking) : amenityState(raw.amenities, PARKING_WORDS)
   if (parking === null) unknowns.push('parking not stated')
 
   const bathrooms = typeof raw.bathrooms === 'number' ? raw.bathrooms : null
@@ -95,9 +118,14 @@ export function mapListing(raw: RawListing): MappedListing {
     parking,
     bathrooms,
     pet_friendly: null,
-    // Furnishing rides along in extras so ranking can check it the same way
-    // it checks any other amenity.
-    extras: [...(raw.amenities ?? []), ...(raw.furnishing ? [raw.furnishing] : [])],
+    // Extras are what ranking matches on, so only readable values go in.
+    // MagicBricks' amenities array is numeric codes and is deliberately left
+    // out: putting it in would match nothing and look like a working check.
+    extras: [
+      ...(raw.amenities ?? []).filter((a) => /[a-z]/i.test(a)),
+      ...(raw.furnishing ? [raw.furnishing] : []),
+      ...(typeof raw.balconies === 'number' && raw.balconies > 0 ? ['Balcony'] : []),
+    ],
     unknowns,
   }
 }
@@ -107,7 +135,15 @@ export function getDemoListings(): RawListing[] {
   return demoData.items as RawListing[]
 }
 
-export const APIFY_ACTOR = 'thirdwatch~nobroker-scraper'
+/** The portals we can pull from. Both share the field names mapListing reads. */
+export const ACTORS = {
+  magicbricks: { id: 'thirdwatch~magicbricks-scraper', label: 'MagicBricks' },
+  nobroker: { id: 'thirdwatch~nobroker-scraper', label: 'NoBroker (owner-direct)' },
+} as const
+
+export type ListingSource = keyof typeof ACTORS
+
+export const APIFY_ACTOR = ACTORS.nobroker.id
 
 /**
  * Start a real Apify run. THIS SPENDS CREDITS -- it is the only function here
@@ -115,25 +151,45 @@ export const APIFY_ACTOR = 'thirdwatch~nobroker-scraper'
  * getDemoListings(). Kept in the same file, mapping through the same
  * mapListing(), so switching over is a change of source and nothing else.
  */
-export async function startApifyRun(input: {
-  city: string
-  localities?: string[]
-  maxResults?: number
-}): Promise<{ runId: string }> {
-  const token = process.env.APIFY_TOKEN
-  if (!token) throw new Error('Missing APIFY_TOKEN')
+function token(): string {
+  const value = process.env.APIFY_TOKEN
+  if (!value) throw new Error('Missing APIFY_TOKEN')
+  return value
+}
 
-  const res = await fetch(`https://api.apify.com/v2/acts/${APIFY_ACTOR}/runs`, {
+/**
+ * Start a real Apify run. THIS SPENDS CREDITS -- the only function here that
+ * does. Roughly 4-5 US cents for 15 results: the headline $1.50/1,000 covers
+ * results, and compute units are charged on top.
+ */
+export async function startApifyRun(
+  source: ListingSource,
+  input: { city: string; maxResults?: number }
+): Promise<{ runId: string; datasetId: string }> {
+  const res = await fetch(`https://api.apify.com/v2/acts/${ACTORS[source].id}/runs`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      searchMode: 'rent',
-      ownerOnly: true,
-      maxResults: 20,
-      ...input,
-    }),
+    headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ searchMode: 'rent', maxResults: 15, ...input }),
   })
   if (!res.ok) throw new Error(`Apify run failed: ${res.status} ${await res.text()}`)
   const json = await res.json()
-  return { runId: json.data.id }
+  return { runId: json.data.id, datasetId: json.data.defaultDatasetId }
+}
+
+/** Reading a run's state costs nothing. */
+export async function getRunState(runId: string): Promise<string> {
+  const res = await fetch(`https://api.apify.com/v2/actor-runs/${runId}`, {
+    headers: { Authorization: `Bearer ${token()}` },
+  })
+  if (!res.ok) throw new Error(`Could not read run: ${res.status}`)
+  return (await res.json()).data.status as string
+}
+
+/** Reading a finished dataset costs nothing. */
+export async function fetchRunItems(datasetId: string): Promise<RawListing[]> {
+  const res = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?clean=true`, {
+    headers: { Authorization: `Bearer ${token()}` },
+  })
+  if (!res.ok) throw new Error(`Could not read dataset: ${res.status}`)
+  return (await res.json()) as RawListing[]
 }
