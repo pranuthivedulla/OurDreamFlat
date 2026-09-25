@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { createSearch, hasSubmitted, searchExists, submitResponse } from '@/lib/db'
@@ -73,6 +74,11 @@ export async function submitResponseAction(
   } catch (error) {
     return { errors: [error instanceof Error ? error.message : 'Something went wrong.'] }
   }
+
+  // Drop any cached copy of the status page so the next request for it -- the
+  // submitter's redirect, or another phone's poll -- is rendered fresh.
+  revalidatePath(`/s/${searchId}`)
+  revalidatePath(`/s/${searchId}/${person}`)
 
   redirect(`/s/${searchId}`)
 }

@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { AutoRefresh } from '@/app/components/auto-refresh'
 import { CopyLink } from '@/app/components/copy-link'
 import { PEOPLE, personName } from '@/lib/constraints'
 import { getStatus } from '@/lib/db'
@@ -31,6 +32,8 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
+      {/* Stops polling once all three are in -- there is nothing left to wait for. */}
+      <AutoRefresh stop={done === total} />
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Your flat search</h1>
         <p className="text-gray-600 dark:text-gray-400">
