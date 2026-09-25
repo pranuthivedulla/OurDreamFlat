@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -19,6 +20,12 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
   const status = await getStatus(id)
   if (!status) notFound()
 
+  // Absolute URL from the request itself, so it is right on localhost and on
+  // Vercel with no configured base URL and no client-side window access.
+  const h = await headers()
+  const proto = h.get('x-forwarded-proto') ?? 'http'
+  const shareUrl = `${proto}://${h.get('host')}/s/${id}`
+
   const done = status.submitted.length
   const total = PEOPLE.length
 
@@ -33,7 +40,7 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
 
       <div className="flex items-center gap-3 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
         <code className="min-w-0 flex-1 truncate text-sm">/s/{id}</code>
-        <CopyLink path={`/s/${id}`} />
+        <CopyLink url={shareUrl} label={`/s/${id}`} />
       </div>
 
       <div className="rounded-xl border border-gray-200 p-6 dark:border-gray-800">
