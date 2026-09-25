@@ -17,7 +17,7 @@ import {
 
 // Bounds for the rent slider. A per-person share, not the whole flat's rent.
 const RENT_MIN = 5000
-const RENT_MAX = 60000
+const RENT_MAX = 40000
 const RENT_STEP = 1000
 const RENT_DEFAULT = 20000
 
