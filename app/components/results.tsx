@@ -28,9 +28,7 @@ export function Results({ result }: { result: Shortlist }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-          {result.shortlist.length === 1
-            ? 'One flat to talk about'
-            : `${result.shortlist.length} flats to talk about`}
+          {result.shortlist.length} {result.shortlist.length === 1 ? 'Shortlist' : 'Shortlists'}
         </h2>
         <p className="mt-2 text-ink-soft">
           Shown side by side, as equals, in no particular order of merit. Between you, you can
@@ -113,9 +111,9 @@ function who(count: number, total: number): string {
 
 function TradeOffs({ gets, givesUp }: { gets: Tally[]; givesUp: Tally[] }) {
   return (
-    <div className="space-y-3 text-sm">
+    <div className="space-y-4 text-sm">
       <div>
-        <p className="field-label text-positive">Gets</p>
+        <p className="text-sm font-extrabold uppercase tracking-wider text-positive">Gets</p>
         {gets.length === 0 ? (
           <p className="text-sm text-ink-soft">Nothing anyone asked for.</p>
         ) : (
@@ -131,7 +129,7 @@ function TradeOffs({ gets, givesUp }: { gets: Tally[]; givesUp: Tally[] }) {
       </div>
 
       <div>
-        <p className="field-label text-negative">Gives up</p>
+        <p className="text-sm font-extrabold uppercase tracking-wider text-negative">Gives up</p>
         {givesUp.length === 0 ? (
           <p className="text-sm text-ink-soft">Nobody gives up anything they named.</p>
         ) : (
