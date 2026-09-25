@@ -2,10 +2,13 @@ import { headers } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { loadDemoListingsAction } from '@/app/actions'
 import { AutoRefresh } from '@/app/components/auto-refresh'
 import { CopyLink } from '@/app/components/copy-link'
+import { Results } from '@/app/components/results'
 import { PEOPLE, personName } from '@/lib/constraints'
-import { getStatus } from '@/lib/db'
+import { getListings, getResponses, getStatus } from '@/lib/db'
+import { buildShortlist } from '@/lib/filter'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +29,13 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
   const h = await headers()
   const proto = h.get('x-forwarded-proto') ?? 'http'
   const shareUrl = `${proto}://${h.get('host')}/s/${id}`
+
+  // Answers are read only once all three are in, and only to compute the
+  // shortlist. Before that the page holds names and nothing else.
+  const everyoneIn = status.submitted.length === PEOPLE.length
+  const [responses, listings] = everyoneIn
+    ? await Promise.all([getResponses(id), getListings(id)])
+    : [[], []]
 
   const done = status.submitted.length
   const total = PEOPLE.length
@@ -84,11 +94,27 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
         </p>
       </div>
 
-      {done === total && (
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          All three forms are in and locked. The shortlist gets built here next.
-        </p>
-      )}
+      {done === total &&
+        (listings.length === 0 ? (
+          <div className="rounded-xl border border-gray-200 p-6 dark:border-gray-800">
+            <h2 className="text-lg font-medium">No flats to filter yet</h2>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Add the demo flats and the shortlist appears here. These are stand-ins
+              with the same shape as scraped NoBroker listings.
+            </p>
+            <form action={loadDemoListingsAction} className="mt-4">
+              <input type="hidden" name="searchId" value={id} />
+              <button
+                type="submit"
+                className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-gray-900"
+              >
+                Load the demo flats
+              </button>
+            </form>
+          </div>
+        ) : (
+          <Results result={buildShortlist(responses, listings)} />
+        ))}
     </main>
   )
 }

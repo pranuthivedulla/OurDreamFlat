@@ -95,7 +95,9 @@ export function mapListing(raw: RawListing): MappedListing {
     parking,
     bathrooms,
     pet_friendly: null,
-    extras: raw.amenities ?? [],
+    // Furnishing rides along in extras so ranking can check it the same way
+    // it checks any other amenity.
+    extras: [...(raw.amenities ?? []), ...(raw.furnishing ? [raw.furnishing] : [])],
     unknowns,
   }
 }

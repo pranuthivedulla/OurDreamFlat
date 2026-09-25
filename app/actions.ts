@@ -3,7 +3,13 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-import { createSearch, hasSubmitted, searchExists, submitResponse } from '@/lib/db'
+import {
+  createSearch,
+  hasSubmitted,
+  loadDemoListings,
+  searchExists,
+  submitResponse,
+} from '@/lib/db'
 import { isPerson, validateResponse, type ResponseInput } from '@/lib/constraints'
 
 export async function createSearchAction(): Promise<never> {
@@ -75,4 +81,12 @@ export async function submitResponseAction(
   revalidatePath(`/s/${searchId}/${person}`)
 
   redirect(`/s/${searchId}`)
+}
+
+/** Puts the twelve demo flats into this search so the engine has something to filter. */
+export async function loadDemoListingsAction(formData: FormData): Promise<void> {
+  const searchId = String(formData.get('searchId') ?? '')
+  if (!(await searchExists(searchId))) return
+  await loadDemoListings(searchId)
+  revalidatePath(`/s/${searchId}`)
 }

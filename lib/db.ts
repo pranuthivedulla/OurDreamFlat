@@ -4,6 +4,8 @@ import { randomInt } from 'crypto'
 
 import { getSupabase } from './supabase'
 import { PEOPLE, type Person, type ResponseInput } from './constraints'
+import type { Listing, Response as FilterResponse } from './filter'
+import { getDemoListings, mapListing } from './listings-source'
 
 // No 0/O/1/I/l -- these get read aloud and retyped from WhatsApp.
 const TOKEN_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'
@@ -115,4 +117,56 @@ export async function submitResponse(
       .eq('id', searchId)
     if (statusError) throw new Error(`Could not update status: ${statusError.message}`)
   }
+}
+
+/** Every response for a search, as the filter engine wants them. */
+export async function getResponses(searchId: string): Promise<FilterResponse[]> {
+  const { data, error } = await getSupabase()
+    .from('responses')
+    .select('person, rent_cap, preferred_areas, dealbreakers, nice_to_haves')
+    .eq('search_id', searchId)
+    .order('person')
+  if (error) throw new Error(`Could not load responses: ${error.message}`)
+  return (data ?? []) as FilterResponse[]
+}
+
+export async function getListings(searchId: string): Promise<Listing[]> {
+  const { data, error } = await getSupabase()
+    .from('listings')
+    .select('id, url, rent, area, floor, has_lift, parking, bathrooms, pet_friendly, extras')
+    .eq('search_id', searchId)
+    .order('id')
+  if (error) throw new Error(`Could not load listings: ${error.message}`)
+  return (data ?? []) as Listing[]
+}
+
+/**
+ * Put the demo flats into a search. Clears first, so pressing the button twice
+ * gives twelve listings rather than twenty-four.
+ */
+export async function loadDemoListings(searchId: string): Promise<number> {
+  const sb = getSupabase()
+  const { error: clearError } = await sb.from('listings').delete().eq('search_id', searchId)
+  if (clearError) throw new Error(`Could not clear listings: ${clearError.message}`)
+
+  const rows = getDemoListings().map((raw) => {
+    const mapped = mapListing(raw)
+    return {
+      search_id: searchId,
+      source: mapped.source,
+      url: mapped.url,
+      rent: mapped.rent,
+      area: mapped.area,
+      floor: mapped.floor,
+      has_lift: mapped.has_lift,
+      parking: mapped.parking,
+      bathrooms: mapped.bathrooms,
+      pet_friendly: mapped.pet_friendly,
+      extras: mapped.extras,
+    }
+  })
+
+  const { error } = await sb.from('listings').insert(rows)
+  if (error) throw new Error(`Could not add listings: ${error.message}`)
+  return rows.length
 }
