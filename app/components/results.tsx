@@ -1,6 +1,6 @@
 import { areaName } from '@/lib/areas'
 import { personName } from '@/lib/constraints'
-import type { Shortlist } from '@/lib/filter'
+import { SHORTLIST_SIZE, type Shortlist } from '@/lib/filter'
 
 const rupees = (n: number) => `₹${n.toLocaleString('en-IN')}`
 
@@ -34,20 +34,20 @@ export function Results({ result }: { result: Shortlist }) {
             : `${result.shortlist.length} flats to talk about`}
         </h2>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Shown side by side, in no particular order of merit. Between you, you can
+          Shown side by side, as equals, in no particular order of merit. Between you, you can
           cover {rupees(result.maxRent)} a month. The app does not pick &mdash; you three do.
         </p>
       </div>
 
       {result.shortfall && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-          Only {result.shortlist.length} cleared everything. The biggest blocker was{' '}
+          Only {result.shortlist.length} of a possible {SHORTLIST_SIZE} cleared everything. The biggest blocker was{' '}
           <strong>{result.shortfall.reason}</strong> ({result.shortfall.blocked} flats).
           Relaxing that alone would bring {result.shortfall.wouldQualify} more.
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {result.shortlist.map((verdict) => (
           <article
             key={verdict.listing.id}

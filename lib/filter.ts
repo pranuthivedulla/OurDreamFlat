@@ -13,6 +13,9 @@ import {
  * on row order coming back from the database.
  */
 
+/** How many flats the shortlist keeps. One place to change it. */
+export const SHORTLIST_SIZE = 5
+
 export type Listing = {
   id: string
   url: string | null
@@ -215,9 +218,10 @@ export function buildShortlist(responses: Response[], listings: Listing[]): Shor
     maxRent,
     considered: listings.length,
     passedCount: passed.length,
-    shortlist: passed.slice(0, 3),
+    shortlist: passed.slice(0, SHORTLIST_SIZE),
     dropped,
-    shortfall: passed.length < 3 ? explainShortfall(dropped, listings.length) : null,
+    shortfall:
+      passed.length < SHORTLIST_SIZE ? explainShortfall(dropped, listings.length) : null,
   }
 }
 
