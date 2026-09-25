@@ -22,17 +22,20 @@ export default async function PersonFormPage({
   // show one -- not even to the person who wrote it.
   if (await hasSubmitted(id, person)) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-6 px-6 py-16">
-        <h1 className="text-3xl font-semibold tracking-tight">
+      <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:py-16">
+        <div className="card p-8 sm:p-12">
+        <p className="field-label">All done</p>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
           {personName(person)}, your form is in
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="mt-3 text-lg leading-relaxed text-ink-soft">
           It is locked now. Your answers stay private &mdash; they are not shown back
           here or anywhere else.
         </p>
-        <Link href={`/s/${id}`} className="font-medium underline underline-offset-4">
+        <Link href={`/s/${id}`} className="btn-primary mt-8 inline-block">
           Back to the search
         </Link>
+        </div>
       </main>
     )
   }

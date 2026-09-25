@@ -3,7 +3,8 @@
 import { useActionState, useMemo, useState } from 'react'
 
 import { submitResponseAction, type SubmitState } from '@/app/actions'
-import { ZONES, areasInZone } from '@/lib/areas'
+import { Stepper } from '@/app/components/stepper'
+import { ZONES, areaName, areasInZone } from '@/lib/areas'
 import {
   DEALBREAKER_TYPES,
   EXTRA_TYPES,
@@ -24,11 +25,17 @@ const RENT_MAX = 40000
 const RENT_STEP = 1000
 const RENT_DEFAULT = 20000
 
+const STEPS = [
+  { title: 'Your budget', blurb: 'The most you will put in each month, for your share of the rent.' },
+  { title: 'Where you want to live', blurb: 'Pick the side of town that suits you — near your office, or wherever you want to be.' },
+  { title: 'What the flat needs', blurb: 'Three of these can be dealbreakers. Everything else is a preference.' },
+  { title: 'Check and send', blurb: 'Have a look before it locks. The other two never see any of this.' },
+]
+
 export function ResponseForm({ searchId, person }: { searchId: string; person: Person }) {
+  const [step, setStep] = useState(1)
   const [rentCap, setRentCap] = useState('')
   const [preferred, setPreferred] = useState<string[]>([])
-  // One stance per parameter, rather than two separate tick-lists that both
-  // contained the same rows.
   const [stances, setStances] = useState<Record<string, Stance>>({})
   const [values, setValues] = useState<Record<string, string>>({})
   const [showErrors, setShowErrors] = useState(false)
@@ -67,6 +74,9 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
   const slotsFull = slotsSpent >= MAX_DEALBREAKERS
   const errors = showErrors && clientErrors.length > 0 ? clientErrors : state.errors
 
+  // Step 1 is the only one that can hold you up: everything after it is optional.
+  const canLeaveStep1 = rentCap !== ''
+
   function toggleArea(id: string) {
     setPreferred(preferred.includes(id) ? preferred.filter((x) => x !== id) : [...preferred, id])
   }
@@ -76,199 +86,258 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight">{personName(person)}&rsquo;s form</h1>
-      <p className="mt-2 text-gray-600 dark:text-gray-400">
-        Only you see this. The other two never see your answers &mdash; just that you
-        have submitted.
-      </p>
+    <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:py-16">
+      <div className="card p-6 sm:p-10">
+        <Stepper current={step} total={STEPS.length} />
 
-      <form
-        action={formAction}
-        onSubmit={(event) => {
-          setShowErrors(true)
-          if (clientErrors.length > 0) event.preventDefault()
-        }}
-        className="mt-10 space-y-10"
-      >
-        <input type="hidden" name="searchId" value={searchId} />
-        <input type="hidden" name="person" value={person} />
-        <input type="hidden" name="payload" value={JSON.stringify(input)} />
+        <header className="mt-8">
+          <p className="field-label">{personName(person)}&rsquo;s form</p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            {STEPS[step - 1].title}
+          </h1>
+          <p className="mt-2 text-lg leading-relaxed text-ink-soft">{STEPS[step - 1].blurb}</p>
+        </header>
 
-        <section className="space-y-3">
-          <h2 className="text-lg font-medium">The most rent you will pay</h2>
-
-          <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
-            {rentCap === '' ? (
-              <p className="text-2xl font-semibold text-gray-400">Not set yet</p>
-            ) : (
-              <p className="text-2xl font-semibold">
-                &#8377;{Number(rentCap).toLocaleString('en-IN')}
-                <span className="ml-2 text-sm font-normal text-gray-500">
-                  a month, your share
-                </span>
-              </p>
-            )}
-
-            <input
-              type="range"
-              min={RENT_MIN}
-              max={RENT_MAX}
-              step={RENT_STEP}
-              // Sits mid-range until she moves it, but rentCap stays empty so an
-              // untouched slider cannot be submitted as if it were a real answer.
-              value={rentCap === '' ? RENT_DEFAULT : rentCap}
-              onChange={(e) => setRentCap(e.target.value)}
-              aria-label="The most rent you will pay per month"
-              className="mt-3 w-full accent-gray-900 dark:accent-white"
-            />
-
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>&#8377;{RENT_MIN.toLocaleString('en-IN')}</span>
-              <span>
-                {rentCap === '' ? 'Drag to choose your cap' : 'Your share, not the whole flat'}
-              </span>
-              <span>&#8377;{RENT_MAX.toLocaleString('en-IN')}</span>
-            </div>
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-lg font-medium">My preferable areas</h2>
-          <p className="text-sm text-gray-500">
-            Where would you like to live? Pick the side of town that works for you
-            &mdash; near your office, or wherever you want to be. Flats in areas more
-            of you chose rank higher. These never drop a flat, so choosing none is fine.
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            {ZONES.map((zone) => {
-              const ids = areasInZone(zone.id).map((a) => a.id)
-              const all = ids.every((id) => preferred.includes(id))
-              const some = !all && ids.some((id) => preferred.includes(id))
-              return (
-                <button
-                  key={zone.id}
-                  type="button"
-                  onClick={() =>
-                    setPreferred(
-                      all
-                        ? preferred.filter((id) => !ids.includes(id))
-                        : [...new Set([...preferred, ...ids])]
-                    )
-                  }
-                  aria-pressed={all}
-                  title={zone.hint}
-                  className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
-                    all
-                      ? 'border-emerald-600 bg-emerald-600 text-white'
-                      : some
-                        ? 'border-emerald-500 text-emerald-700 dark:text-emerald-400'
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
-                  }`}
-                >
-                  {zone.name}
-                  {some && <span className="ml-1 text-xs">(some)</span>}
-                </button>
-              )
-            })}
-          </div>
-
-          <details className="text-sm">
-            <summary className="cursor-pointer text-gray-500">Pick single areas instead</summary>
-            <div className="mt-3 space-y-3">
-              {ZONES.map((zone) => (
-                <div key={zone.id}>
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    {zone.name}
-                  </p>
-                  <div className="mt-1 grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3">
-                    {areasInZone(zone.id).map((area) => (
-                      <label key={area.id} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={preferred.includes(area.id)}
-                          onChange={() => toggleArea(area.id)}
-                          className="h-4 w-4"
-                        />
-                        {area.name}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </details>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-lg font-medium">What the flat needs</h2>
-          <p className="text-sm text-gray-500">
-            For each one: a dealbreaker drops any flat that fails it, preferred just
-            ranks the flats that survive, and don&rsquo;t care is ignored entirely.
-          </p>
-          <p className="text-sm font-medium">
-            Dealbreakers used: {slotsSpent} of {MAX_DEALBREAKERS}
-            {slotsFull && (
-              <span className="ml-2 font-normal text-gray-500">
-                &mdash; all spent. Drop one to mark another.
-              </span>
-            )}
-          </p>
-
-          <div className="divide-y divide-gray-200 rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
-            {DEALBREAKER_TYPES.map((spec) => (
-              <ParamRow
-                key={spec.id}
-                label={spec.label}
-                stance={stances[spec.id] ?? 'none'}
-                onStance={(s) => setStance(spec.id, s)}
-                dealbreakerAllowed
-                dealbreakerDisabled={slotsFull && stances[spec.id] !== 'dealbreaker'}
-                numberValue={spec.needsNumber ? (values[spec.id] ?? '') : null}
-                onNumber={(v) => setValues({ ...values, [spec.id]: v })}
-              />
-            ))}
-            {EXTRA_TYPES.map((spec) => (
-              <ParamRow
-                key={spec.id}
-                label={spec.label}
-                stance={stances[spec.id] ?? 'none'}
-                onStance={(s) => setStance(spec.id, s)}
-                dealbreakerAllowed={false}
-                dealbreakerDisabled
-                numberValue={null}
-                onNumber={() => {}}
-              />
-            ))}
-          </div>
-
-          <p className="text-xs text-gray-500">
-            The five above the line are the only ones that can be dealbreakers. The
-            rest rank flats, they never drop one.
-          </p>
-        </section>
-
-        {errors.length > 0 && (
-          <ul className="space-y-1 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
-            {errors.map((error, i) => (
-              <li key={i}>{error}</li>
-            ))}
-          </ul>
-        )}
-
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-lg bg-gray-900 px-5 py-2.5 font-medium text-white transition hover:bg-gray-700 disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+        <form
+          action={formAction}
+          onSubmit={(event) => {
+            setShowErrors(true)
+            if (clientErrors.length > 0) event.preventDefault()
+          }}
+          className="mt-8"
         >
-          {pending ? 'Submitting…' : 'Submit my form'}
-        </button>
-        <p className="text-xs text-gray-500">
-          Once you submit, this form locks. We never ask why you need any of this.
-        </p>
-      </form>
+          <input type="hidden" name="searchId" value={searchId} />
+          <input type="hidden" name="person" value={person} />
+          <input type="hidden" name="payload" value={JSON.stringify(input)} />
+
+          {step === 1 && (
+            <section>
+              <p className="field-label">Most rent per month</p>
+              <p className="mt-2 text-4xl font-extrabold tracking-tight">
+                {rentCap === '' ? (
+                  <span className="text-ink-faint">Not set yet</span>
+                ) : (
+                  `₹${Number(rentCap).toLocaleString('en-IN')}`
+                )}
+              </p>
+
+              <input
+                type="range"
+                min={RENT_MIN}
+                max={RENT_MAX}
+                step={RENT_STEP}
+                // Sits mid-range until she moves it, but rentCap stays empty so an
+                // untouched slider cannot be submitted as if it were a real answer.
+                value={rentCap === '' ? RENT_DEFAULT : rentCap}
+                onChange={(e) => setRentCap(e.target.value)}
+                aria-label="The most rent you will pay per month"
+                className="mt-5 w-full"
+              />
+
+              <div className="mt-1 flex justify-between text-xs font-medium text-ink-faint">
+                <span>₹{RENT_MIN.toLocaleString('en-IN')}</span>
+                <span>
+                  {rentCap === '' ? 'Drag to choose' : 'Your share, not the whole flat'}
+                </span>
+                <span>₹{RENT_MAX.toLocaleString('en-IN')}</span>
+              </div>
+            </section>
+          )}
+
+          {step === 2 && (
+            <section>
+              <p className="field-label">Preferred zones</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {ZONES.map((zone) => {
+                  const ids = areasInZone(zone.id).map((a) => a.id)
+                  const all = ids.every((id) => preferred.includes(id))
+                  const some = !all && ids.some((id) => preferred.includes(id))
+                  return (
+                    <button
+                      key={zone.id}
+                      type="button"
+                      onClick={() =>
+                        setPreferred(
+                          all
+                            ? preferred.filter((id) => !ids.includes(id))
+                            : [...new Set([...preferred, ...ids])]
+                        )
+                      }
+                      aria-pressed={all}
+                      title={zone.hint}
+                      className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                        all
+                          ? 'border-accent bg-accent text-white shadow-[0_8px_18px_-8px_rgba(79,86,229,0.8)]'
+                          : some
+                            ? 'border-accent bg-accent-soft text-accent'
+                            : 'border-line bg-field text-ink-soft hover:border-ink-faint'
+                      }`}
+                    >
+                      {zone.name}
+                      {some && <span className="ml-1 text-xs font-medium">some</span>}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <p className="mt-4 text-sm text-ink-soft">
+                These rank flats higher. They never drop one, so picking none is fine.
+              </p>
+
+              <details className="mt-4">
+                <summary className="cursor-pointer text-sm font-semibold text-accent">
+                  Pick single areas instead
+                </summary>
+                <div className="mt-4 space-y-4">
+                  {ZONES.map((zone) => (
+                    <div key={zone.id}>
+                      <p className="field-label">{zone.name}</p>
+                      <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
+                        {areasInZone(zone.id).map((area) => (
+                          <label
+                            key={area.id}
+                            className="flex items-center gap-2 text-sm text-ink-soft"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={preferred.includes(area.id)}
+                              onChange={() => toggleArea(area.id)}
+                              className="h-4 w-4 accent-[var(--accent)]"
+                            />
+                            {area.name}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </section>
+          )}
+
+          {step === 3 && (
+            <section>
+              <div className="flex items-center justify-between">
+                <p className="field-label">Dealbreakers used</p>
+                <p className="text-sm font-bold">
+                  <span className={slotsFull ? 'text-negative' : 'text-accent'}>{slotsSpent}</span>
+                  <span className="text-ink-faint"> / {MAX_DEALBREAKERS}</span>
+                </p>
+              </div>
+
+              <div className="mt-3 divide-y divide-line overflow-hidden rounded-2xl border border-line">
+                {DEALBREAKER_TYPES.map((spec) => (
+                  <ParamRow
+                    key={spec.id}
+                    label={spec.label}
+                    stance={stances[spec.id] ?? 'none'}
+                    answered={stances[spec.id] !== undefined}
+                    onStance={(s) => setStance(spec.id, s)}
+                    dealbreakerAllowed
+                    dealbreakerDisabled={slotsFull && stances[spec.id] !== 'dealbreaker'}
+                    numberValue={spec.needsNumber ? (values[spec.id] ?? '') : null}
+                    onNumber={(v) => setValues({ ...values, [spec.id]: v })}
+                  />
+                ))}
+                {EXTRA_TYPES.map((spec) => (
+                  <ParamRow
+                    key={spec.id}
+                    label={spec.label}
+                    stance={stances[spec.id] ?? 'none'}
+                    answered={stances[spec.id] !== undefined}
+                    onStance={(s) => setStance(spec.id, s)}
+                    dealbreakerAllowed={false}
+                    dealbreakerDisabled
+                    numberValue={null}
+                    onNumber={() => {}}
+                  />
+                ))}
+              </div>
+
+              <p className="mt-3 text-sm text-ink-soft">
+                The five above the line are the only ones that can be dealbreakers. The
+                rest rank flats, they never drop one.
+              </p>
+            </section>
+          )}
+
+          {step === 4 && (
+            <section className="space-y-5">
+              <Summary label="Most rent per month">
+                {rentCap === '' ? 'Not set' : `₹${Number(rentCap).toLocaleString('en-IN')}`}
+              </Summary>
+              <Summary label="Areas you picked">
+                {preferred.length === 0
+                  ? 'None — anywhere is fine'
+                  : preferred.map(areaName).join(', ')}
+              </Summary>
+              <Summary label={`Dealbreakers (${input.dealbreakers.length})`}>
+                {input.dealbreakers.length === 0
+                  ? 'None'
+                  : input.dealbreakers
+                      .map(
+                        (d) =>
+                          `${NICE_TO_HAVE_TYPES.find((t) => t.id === d.type)?.label ?? d.type}${d.value ? ` (${d.value})` : ''}`
+                      )
+                      .join(', ')}
+              </Summary>
+              <Summary label={`Preferences (${input.nice_to_haves.length})`}>
+                {input.nice_to_haves.length === 0
+                  ? 'None'
+                  : input.nice_to_haves
+                      .map((n) => NICE_TO_HAVE_TYPES.find((t) => t.id === n.type)?.label ?? n.type)
+                      .join(', ')}
+              </Summary>
+              <p className="text-sm text-ink-soft">
+                Once you send this it locks. We never ask why you need any of it.
+              </p>
+            </section>
+          )}
+
+          {errors.length > 0 && (
+            <ul className="mt-6 space-y-1 rounded-2xl border border-[color:var(--negative)]/30 bg-[color:var(--negative)]/5 p-4 text-sm font-medium text-negative">
+              {errors.map((error, i) => (
+                <li key={i}>{error}</li>
+              ))}
+            </ul>
+          )}
+
+          <div className="mt-10 flex items-center justify-between">
+            {step > 1 ? (
+              <button type="button" onClick={() => setStep(step - 1)} className="btn-quiet">
+                Back
+              </button>
+            ) : (
+              <span />
+            )}
+
+            {step < STEPS.length ? (
+              <button
+                type="button"
+                disabled={step === 1 && !canLeaveStep1}
+                onClick={() => setStep(step + 1)}
+                className="btn-primary"
+              >
+                Continue
+              </button>
+            ) : (
+              <button type="submit" disabled={pending} className="btn-primary">
+                {pending ? 'Sending…' : 'Send my answers'}
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
     </main>
+  )
+}
+
+function Summary({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="field-label">{label}</p>
+      <p className="mt-1 font-semibold">{children}</p>
+    </div>
   )
 }
 
@@ -279,6 +348,7 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
 function ParamRow({
   label,
   stance,
+  answered,
   onStance,
   dealbreakerAllowed,
   dealbreakerDisabled,
@@ -287,6 +357,8 @@ function ParamRow({
 }: {
   label: string
   stance: Stance
+  /** False until she picks something, so an untouched row looks untouched. */
+  answered: boolean
   onStance: (s: Stance) => void
   dealbreakerAllowed: boolean
   dealbreakerDisabled: boolean
@@ -300,14 +372,14 @@ function ParamRow({
   ]
 
   const tone: Record<Stance, string> = {
-    dealbreaker: 'bg-red-600 text-white border-red-600',
-    prefer: 'bg-emerald-600 text-white border-emerald-600',
-    none: 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white',
+    dealbreaker: 'bg-[color:var(--negative)] text-white border-transparent',
+    prefer: 'bg-[color:var(--positive)] text-white border-transparent',
+    none: 'bg-ink text-white border-transparent',
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 p-3">
-      <span className="text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-4">
+      <span className="text-sm font-semibold">
         {label}
         {numberValue !== null && stance !== 'none' && (
           <input
@@ -317,14 +389,14 @@ function ParamRow({
             value={numberValue}
             onChange={(e) => onNumber(e.target.value)}
             aria-label={`${label} — how many`}
-            className="ml-2 w-16 rounded-lg border border-gray-300 px-2 py-1 dark:border-gray-700 dark:bg-transparent"
+            className="ml-2 w-16 rounded-lg border border-line bg-field px-2 py-1 text-sm"
           />
         )}
       </span>
 
-      <div className="flex gap-1" role="group" aria-label={label}>
+      <div className="flex gap-1.5" role="group" aria-label={label}>
         {options.map((option) => {
-          const active = stance === option.id
+          const active = answered && stance === option.id
           const disabled = option.id === 'dealbreaker' && dealbreakerDisabled
           return (
             <button
@@ -333,10 +405,8 @@ function ParamRow({
               disabled={disabled}
               aria-pressed={active}
               onClick={() => onStance(option.id)}
-              className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
-                active
-                  ? tone[option.id]
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition disabled:opacity-35 ${
+                active ? tone[option.id] : 'border-line bg-field text-ink-soft hover:border-ink-faint'
               }`}
             >
               {option.text}

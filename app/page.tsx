@@ -2,32 +2,28 @@ import { createSearchAction } from './actions'
 
 export default function Home() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-8 px-6 py-16">
-      <div className="space-y-3">
-        <h1 className="text-4xl font-semibold tracking-tight">FlatSearch</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">
-          Three of you, one shared flat. Each of you fills in what you need,
-          privately. Nobody sees anyone else&rsquo;s answers.
+    <main className="mx-auto flex w-full max-w-xl flex-1 items-center px-4 py-10 sm:py-16">
+      <div className="card w-full p-8 sm:p-12">
+        <p className="field-label">FlatSearch</p>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">
+          Three of you, one flat.
+        </h1>
+        <p className="mt-4 text-lg leading-relaxed text-ink-soft">
+          Each of you says what you need, privately. Nobody sees anyone
+          else&rsquo;s answers. You come out with a handful of flats worth
+          discussing.
         </p>
-      </div>
 
-      <div className="rounded-xl border border-gray-200 p-6 dark:border-gray-800">
-        <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-          Start a search and you&rsquo;ll get one link to share with the other two.
-        </p>
-        <form action={createSearchAction}>
-          <button
-            type="submit"
-            className="rounded-lg bg-gray-900 px-5 py-2.5 font-medium text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
-          >
-            New search
+        <form action={createSearchAction} className="mt-10">
+          <button type="submit" className="btn-primary">
+            Start a new search
           </button>
         </form>
-      </div>
 
-      <p className="text-sm text-gray-500">
-        This app shortlists flats. It never picks one &mdash; the three of you do that.
-      </p>
+        <p className="mt-8 text-sm text-ink-faint">
+          The app shortlists. It never picks &mdash; the three of you do that.
+        </p>
+      </div>
     </main>
   )
 }

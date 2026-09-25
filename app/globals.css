@@ -1,26 +1,110 @@
 @import "tailwindcss";
 
+/*
+ * One card on a near-black page. The page is always dark and the card is
+ * always light -- this is a fixed look, not a light/dark theme, so the
+ * prefers-color-scheme switch is gone and nothing needs dark: variants.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --page: #0b0b10;
+  --card: #ffffff;
+  --ink: #17131b;
+  --ink-soft: #6b7180;
+  --ink-faint: #9aa0ae;
+  --line: #e8eaf0;
+  --field: #f7f8fa;
+  --accent: #4f56e5;
+  --accent-soft: #eef0fe;
+  --positive: #0f9d6f;
+  --negative: #e0556e;
+  --warn-bg: #fff8e8;
+  --warn-ink: #8a6220;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-field: var(--field);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-ink: var(--warn-ink);
+  --font-sans: var(--font-jakarta);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+}
+
+/* The small letter-spaced caps used on every field label. */
+.field-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Text inputs and selects share one look. */
+.field {
+  width: 100%;
+  border-radius: 0.875rem;
+  border: 1px solid var(--line);
+  background: var(--field);
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+/* The pill primary button, with the soft glow from the reference. */
+.btn-primary {
+  border-radius: 9999px;
+  background: var(--accent);
+  padding: 0.875rem 2rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 10px 24px -8px rgba(79, 86, 229, 0.7);
+  transition: transform 0.12s, box-shadow 0.15s, opacity 0.15s;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px -8px rgba(79, 86, 229, 0.8);
+}
+.btn-primary:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.btn-quiet {
+  font-weight: 600;
+  color: var(--ink-faint);
+  transition: color 0.15s;
+}
+.btn-quiet:hover {
+  color: var(--ink);
+}
+
+/* The white card everything sits inside. */
+.card {
+  background: var(--card);
+  border-radius: 1.75rem;
+  box-shadow: 0 32px 80px -24px rgba(0, 0, 0, 0.55);
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
 }

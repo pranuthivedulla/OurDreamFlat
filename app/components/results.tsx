@@ -10,10 +10,10 @@ const rupees = (n: number) => `₹${n.toLocaleString('en-IN')}`
 export function Results({ result }: { result: Shortlist }) {
   if (result.shortlist.length === 0) {
     return (
-      <div className="rounded-xl border border-gray-200 p-6 dark:border-gray-800">
-        <h2 className="text-lg font-medium">Nothing cleared all three sets of answers</h2>
+      <div className="">
+        <h2 className="text-2xl font-extrabold tracking-tight">Nothing cleared all three sets of answers</h2>
         {result.shortfall && (
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-ink-soft">
             The single biggest blocker was <strong>{result.shortfall.reason}</strong>, which
             ruled out {result.shortfall.blocked}{' '}
             {result.shortfall.blocked === 1 ? 'flat' : 'flats'}. Relaxing just that would
@@ -27,23 +27,23 @@ export function Results({ result }: { result: Shortlist }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">
+        <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
           {result.shortlist.length === 1
             ? 'One flat to talk about'
             : `${result.shortlist.length} flats to talk about`}
         </h2>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-ink-soft">
           Shown side by side, as equals, in no particular order of merit. Between you, you can
           cover {rupees(result.maxRent)} a month. The app does not pick &mdash; you three do.
         </p>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-ink-faint">
           Trade-offs are shown as counts, never names: you can see what a flat costs
           someone without learning who to feel bad about.
         </p>
       </div>
 
       {result.shortfall && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="rounded-2xl bg-warn-bg p-4 text-sm font-medium text-warn-ink">
           Only {result.shortlist.length} of a possible {SHORTLIST_SIZE} cleared everything. The biggest blocker was{' '}
           <strong>{result.shortfall.reason}</strong> ({result.shortfall.blocked} flats).
           Relaxing that alone would bring {result.shortfall.wouldQualify} more.
@@ -54,13 +54,13 @@ export function Results({ result }: { result: Shortlist }) {
         {result.shortlist.map((verdict) => (
           <article
             key={verdict.listing.id}
-            className="flex flex-col gap-4 rounded-xl border border-gray-200 p-4 dark:border-gray-800"
+            className="flex flex-col gap-4 rounded-2xl border border-line p-5"
           >
             <header>
-              <p className="text-lg font-semibold">
+              <p className="text-xl font-extrabold tracking-tight">
                 {verdict.listing.area ? areaName(verdict.listing.area) : 'Area not identified'}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="mt-1 text-sm font-medium text-ink-soft">
                 {verdict.listing.rent === null
                   ? 'Rent not stated'
                   : `${rupees(verdict.listing.rent)} a month`}
@@ -70,7 +70,7 @@ export function Results({ result }: { result: Shortlist }) {
             </header>
 
             {verdict.flags.length > 0 && (
-              <ul className="space-y-1 rounded-lg bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+              <ul className="space-y-1 rounded-xl bg-warn-bg p-3 text-xs font-medium text-warn-ink">
                 {verdict.flags.map((flag) => (
                   <li key={flag}>⚠️ Confirm before visiting: {flag.toLowerCase()}</li>
                 ))}
@@ -84,7 +84,7 @@ export function Results({ result }: { result: Shortlist }) {
                 href={verdict.listing.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-auto text-sm font-medium underline underline-offset-4"
+                className="mt-auto text-sm font-bold text-accent"
               >
                 See the listing
               </a>
@@ -93,7 +93,7 @@ export function Results({ result }: { result: Shortlist }) {
         ))}
       </div>
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-ink-faint">
         {result.considered} flats looked at &middot; {result.dropped.length} dropped for
         breaking someone&rsquo;s dealbreaker or the shared rent ceiling &middot;{' '}
         {result.passedCount} cleared everything, and the {result.shortlist.length} that
@@ -115,11 +115,11 @@ function TradeOffs({ gets, givesUp }: { gets: Tally[]; givesUp: Tally[] }) {
   return (
     <div className="space-y-3 text-sm">
       <div>
-        <p className="font-medium text-emerald-700 dark:text-emerald-400">Gets</p>
+        <p className="field-label text-positive">Gets</p>
         {gets.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-400">Nothing anyone asked for.</p>
+          <p className="text-sm text-ink-soft">Nothing anyone asked for.</p>
         ) : (
-          <ul className="space-y-0.5 text-gray-600 dark:text-gray-400">
+          <ul className="mt-1 space-y-1 text-sm text-ink-soft">
             {gets.map((item) => (
               <li key={item.text}>
                 {who(item.count, item.total)} {item.count === 1 ? 'gets' : 'get'}{' '}
@@ -131,11 +131,11 @@ function TradeOffs({ gets, givesUp }: { gets: Tally[]; givesUp: Tally[] }) {
       </div>
 
       <div>
-        <p className="font-medium text-red-700 dark:text-red-400">Gives up</p>
+        <p className="field-label text-negative">Gives up</p>
         {givesUp.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-400">Nobody gives up anything they named.</p>
+          <p className="text-sm text-ink-soft">Nobody gives up anything they named.</p>
         ) : (
-          <ul className="space-y-0.5 text-gray-600 dark:text-gray-400">
+          <ul className="mt-1 space-y-1 text-sm text-ink-soft">
             {givesUp.map((item) => (
               <li key={item.text}>
                 {who(item.count, item.total)} {item.count === 1 ? 'gives' : 'give'} up{' '}
