@@ -1,0 +1,25 @@
+{
+  "note": "Single source of truth for no-go areas, must_be_near areas and listing.area. Match on `id`, never on `name` — that is what keeps no-go matching and commute lookup from disagreeing on spelling. Coordinates are approximate area centroids, good enough for an estimate and nothing more.",
+  "areas": [
+    { "id": "hinjewadi",        "name": "Hinjewadi",         "lat": 18.5913, "lng": 73.7389 },
+    { "id": "wakad",            "name": "Wakad",             "lat": 18.5975, "lng": 73.7898 },
+    { "id": "balewadi",         "name": "Balewadi",          "lat": 18.5750, "lng": 73.7690 },
+    { "id": "baner",            "name": "Baner",             "lat": 18.5590, "lng": 73.7868 },
+    { "id": "aundh",            "name": "Aundh",             "lat": 18.5590, "lng": 73.8077 },
+    { "id": "bavdhan",          "name": "Bavdhan",           "lat": 18.5180, "lng": 73.7730 },
+    { "id": "pimple-saudagar",  "name": "Pimple Saudagar",   "lat": 18.5986, "lng": 73.8103 },
+    { "id": "pimpri-chinchwad", "name": "Pimpri-Chinchwad",  "lat": 18.6298, "lng": 73.7997 },
+    { "id": "kothrud",          "name": "Kothrud",           "lat": 18.5074, "lng": 73.8077 },
+    { "id": "karve-nagar",      "name": "Karve Nagar",       "lat": 18.4899, "lng": 73.8168 },
+    { "id": "warje",            "name": "Warje",             "lat": 18.4820, "lng": 73.7990 },
+    { "id": "sinhagad-road",    "name": "Sinhagad Road",     "lat": 18.4640, "lng": 73.8280 },
+    { "id": "shivajinagar",     "name": "Shivajinagar",      "lat": 18.5308, "lng": 73.8478 },
+    { "id": "koregaon-park",    "name": "Koregaon Park",     "lat": 18.5362, "lng": 73.8939 },
+    { "id": "kalyani-nagar",    "name": "Kalyani Nagar",     "lat": 18.5480, "lng": 73.9010 },
+    { "id": "viman-nagar",      "name": "Viman Nagar",       "lat": 18.5679, "lng": 73.9143 },
+    { "id": "kharadi",          "name": "Kharadi",           "lat": 18.5515, "lng": 73.9470 },
+    { "id": "hadapsar",         "name": "Hadapsar",          "lat": 18.5089, "lng": 73.9260 },
+    { "id": "wanowrie",         "name": "Wanowrie",          "lat": 18.4840, "lng": 73.8990 },
+    { "id": "kondhwa",          "name": "Kondhwa",           "lat": 18.4660, "lng": 73.8890 }
+  ]
+}
