@@ -17,14 +17,14 @@ export function getSupabase(): SupabaseClient {
   if (client) return client
 
   const url = process.env.SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !serviceKey) {
+  const secretKey = process.env.SUPABASE_SECRET_KEY
+  if (!url || !secretKey) {
     throw new Error(
-      'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY. Copy .env.example to .env.local and fill both in.'
+      'Missing SUPABASE_URL or SUPABASE_SECRET_KEY. Copy .env.example to .env.local and fill both in.'
     )
   }
 
-  client = createClient(url, serviceKey, {
+  client = createClient(url, secretKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
   return client
