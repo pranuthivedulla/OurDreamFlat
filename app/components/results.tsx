@@ -14,10 +14,19 @@ export function Results({ result }: { result: Shortlist }) {
         <h2 className="text-2xl font-extrabold tracking-tight">Nothing cleared all three sets of answers</h2>
         {result.shortfall && (
           <p className="mt-2 text-ink-soft">
-            The single biggest blocker was <strong>{result.shortfall.reason}</strong>, which
-            ruled out {result.shortfall.blocked}{' '}
-            {result.shortfall.blocked === 1 ? 'flat' : 'flats'}. Relaxing just that would
-            bring {result.shortfall.wouldQualify} back.
+            {result.shortfall.wouldQualify > 0 ? (
+              <>
+                Dropping <strong>{result.shortfall.reason}</strong> would bring back{' '}
+                {result.shortfall.wouldQualify}{' '}
+                {result.shortfall.wouldQualify === 1 ? 'flat' : 'flats'}.
+              </>
+            ) : (
+              <>
+                The most common blocker was <strong>{result.shortfall.reason}</strong> (
+                {result.shortfall.blocked} flats), but every flat it stops also fails
+                something else, so relaxing it alone changes nothing.
+              </>
+            )}
           </p>
         )}
       </div>
@@ -43,9 +52,24 @@ export function Results({ result }: { result: Shortlist }) {
 
       {result.shortfall && (
         <div className="rounded-2xl bg-warn-bg p-4 text-sm font-medium text-warn-ink">
-          Only {result.shortlist.length} of a possible {SHORTLIST_SIZE} cleared everything. The biggest blocker was{' '}
-          <strong>{result.shortfall.reason}</strong> ({result.shortfall.blocked} flats).
-          Relaxing that alone would bring {result.shortfall.wouldQualify} more.
+          Only {result.shortlist.length} of a possible {SHORTLIST_SIZE} cleared everything.{' '}
+          {result.shortfall.wouldQualify > 0 ? (
+            <>
+              Dropping <strong>{result.shortfall.reason}</strong>
+              {result.shortfall.askedByCount > 1 &&
+                ` — which ${
+                  result.shortfall.askedByCount === 3 ? 'all three' : result.shortfall.askedByCount
+                } of you asked for —`}{' '}
+              would bring back {result.shortfall.wouldQualify}{' '}
+              {result.shortfall.wouldQualify === 1 ? 'flat' : 'flats'}.
+            </>
+          ) : (
+            <>
+              The most common blocker was <strong>{result.shortfall.reason}</strong> (
+              {result.shortfall.blocked} flats), but relaxing it alone changes nothing:
+              every flat it stops also fails something else.
+            </>
+          )}
         </div>
       )}
 

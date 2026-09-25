@@ -1,4 +1,4 @@
-import { NICE_TO_HAVE_TYPES, personName, type Constraint, type Person } from './constraints'
+import { NICE_TO_HAVE_TYPES, type Constraint, type Person } from './constraints'
 
 /**
  * The filter engine. Plain code, no AI, and deterministic: the same three
@@ -47,10 +47,12 @@ export type Verdict = {
   listing: Listing
   passed: boolean
   /**
-   * Why it was dropped, in the person's words. Empty when it passed.
-   * `key` is the category -- what gets counted when working out which single
-   * constraint cost the most. The reason text names this listing's own
-   * numbers, so it is unique per listing and must never be counted.
+   * Why it was dropped. Empty when it passed.
+   *
+   * `key` identifies the CONSTRAINT, not the person who asked for it. If all
+   * three want three bathrooms, that is one rule blocking a flat three times,
+   * not three rules -- and relaxing "Kavita's" copy of it would change
+   * nothing while the other two stand.
    */
   blockedBy: { person: Person; key: string; reason: string }[]
   perPerson: PersonView[]
@@ -69,7 +71,13 @@ export type Shortlist = {
   shortlist: Verdict[]
   dropped: Verdict[]
   /** Set when fewer than three passed: what blocked the most, and what relaxing it would buy. */
-  shortfall: { reason: string; blocked: number; wouldQualify: number } | null
+  shortfall: {
+    reason: string
+    blocked: number
+    wouldQualify: number
+    /** How many of the three asked for it. 0 for the shared rent ceiling. */
+    askedByCount: number
+  } | null
 }
 
 const label = (type: string) => NICE_TO_HAVE_TYPES.find((t) => t.id === type)?.label ?? type
@@ -180,8 +188,9 @@ export function buildShortlist(responses: Response[], listings: Listing[]): Shor
         } else if (result === false) {
           blockedBy.push({
             person: response.person,
-            key: `${response.person}:${constraint.type}`,
-            reason: `${personName(response.person)}'s dealbreaker: ${label(constraint.type)}${constraint.value ? ` (${constraint.value})` : ''}`,
+            key: `db:${constraint.type}:${constraint.value ?? ''}`,
+            // No name: the results page shows counts, never who asked.
+            reason: `the dealbreaker "${label(constraint.type)}${constraint.value ? ` (${constraint.value})` : ''}"`,
           })
         } else {
           gets.push(phrase(constraint.type, constraint.value))
@@ -261,28 +270,43 @@ export function buildShortlist(responses: Response[], listings: Listing[]): Shor
 function explainShortfall(
   dropped: Verdict[],
   total: number
-): { reason: string; blocked: number; wouldQualify: number } | null {
+): { reason: string; blocked: number; wouldQualify: number; askedByCount: number } | null {
   if (dropped.length === 0) return null
 
   const counts = new Map<string, number>()
   const labels = new Map<string, string>()
+  const askedBy = new Map<string, Set<Person>>()
   for (const verdict of dropped) {
-    for (const block of verdict.blockedBy) {
-      if (counts.get(block.key) === undefined) labels.set(block.key, block.reason)
+    for (const block of new Map(verdict.blockedBy.map((b) => [b.key, b])).values()) {
+      if (!labels.has(block.key)) labels.set(block.key, block.reason)
       counts.set(block.key, (counts.get(block.key) ?? 0) + 1)
+    }
+    for (const block of verdict.blockedBy) {
+      if (!askedBy.has(block.key)) askedBy.set(block.key, new Set())
+      askedBy.get(block.key)!.add(block.person)
     }
   }
 
-  const [key, blocked] = [...counts.entries()].sort(
-    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+  // How many flats a single relaxation would actually bring back: those blocked
+  // by this constraint and nothing else.
+  const freedBy = (key: string) =>
+    dropped.filter((v) => v.blockedBy.every((b) => b.key === key)).length
+
+  // Rank by what relaxing it buys, and only fall back to raw block count when
+  // no single change helps. Naming the most-blocking rule is useless advice
+  // when every flat it stops also fails something else.
+  const [key] = [...counts.entries()].sort(
+    (a, b) =>
+      freedBy(b[0]) - freedBy(a[0]) || b[1] - a[1] || a[0].localeCompare(b[0])
   )[0]
 
-  // How many would come back if this one constraint were relaxed and nothing
-  // else changed -- so only listings blocked by this and nothing else.
-  const wouldQualify = dropped.filter((v) => v.blockedBy.every((b) => b.key === key)).length
-
   void total
-  return { reason: labels.get(key)!, blocked, wouldQualify }
+  return {
+    reason: labels.get(key)!,
+    blocked: counts.get(key)!,
+    wouldQualify: freedBy(key),
+    askedByCount: key === 'rent' ? 0 : (askedBy.get(key)?.size ?? 0),
+  }
 }
 
 /**
