@@ -28,7 +28,8 @@ export function Results({ result }: { result: Shortlist }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-          {result.shortlist.length} {result.shortlist.length === 1 ? 'Shortlist' : 'Shortlists'}
+          {result.shortlist.length} Shortlisted{' '}
+          {result.shortlist.length === 1 ? 'Property' : 'Properties'}
         </h2>
         <p className="mt-2 text-ink-soft">
           Shown side by side, as equals, in no particular order of merit. Between you, you can
