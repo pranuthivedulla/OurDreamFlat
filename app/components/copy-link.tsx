@@ -1,14 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
+/**
+ * Copy the share link, or hand it to WhatsApp with the message pre-typed.
+ *
+ * The WhatsApp button is a plain wa.me link, not an integration: it opens
+ * WhatsApp with text ready and the sender still chooses the chat and presses
+ * send. Auto-posting is explicitly not being built.
+ */
 export function CopyLink({ path }: { path: string }) {
   const [copied, setCopied] = useState(false)
+  const [url, setUrl] = useState('')
 
   // Built in the browser so it is right on localhost and on Vercel alike,
   // without needing a configured base URL.
+  useEffect(() => {
+    setUrl(`${window.location.origin}${path}`)
+  }, [path])
+
   async function copy() {
-    const url = `${window.location.origin}${path}`
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
@@ -18,13 +29,32 @@ export function CopyLink({ path }: { path: string }) {
     }
   }
 
+  const message = `We're picking a flat. Fill in what you need here — each of us fills it in separately and nobody sees anyone else's answers: ${url}`
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(message)}`
+
   return (
-    <button
-      type="button"
-      onClick={copy}
-      className="shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium transition hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
-    >
-      {copied ? 'Copied' : 'Copy link'}
-    </button>
+    <div className="flex shrink-0 gap-2">
+      <button
+        type="button"
+        onClick={copy}
+        className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium transition hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+      >
+        {copied ? 'Copied' : 'Copy link'}
+      </button>
+
+      <a
+        href={url ? whatsappHref : undefined}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-disabled={!url}
+        className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#1eb457] aria-disabled:pointer-events-none aria-disabled:opacity-50"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
+          <path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.63.71.22 1.36.19 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35z" />
+          <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.87 9.87 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.13h-.01a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.17 8.17 0 0 1-1.25-4.36c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.26.86 5.82 2.41a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23z" />
+        </svg>
+        WhatsApp
+      </a>
+    </div>
   )
 }
