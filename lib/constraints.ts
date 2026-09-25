@@ -81,7 +81,7 @@ export function validateResponse(input: ResponseInput): string[] {
   const errors: string[] = []
 
   if (!Number.isInteger(input.rent_cap) || input.rent_cap <= 0) {
-    errors.push('Rent cap must be a whole number of rupees above zero.')
+    errors.push('Set the most rent you will pay.')
   }
 
   for (const id of input.no_go_areas) {

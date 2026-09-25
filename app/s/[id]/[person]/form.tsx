@@ -15,6 +15,12 @@ import {
   type ResponseInput,
 } from '@/lib/constraints'
 
+// Bounds for the rent slider. A per-person share, not the whole flat's rent.
+const RENT_MIN = 5000
+const RENT_MAX = 60000
+const RENT_STEP = 1000
+const RENT_DEFAULT = 20000
+
 type PlaceDraft = {
   label: string
   area: string
@@ -100,19 +106,40 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
 
         <section className="space-y-3">
           <h2 className="text-lg font-medium">The most rent you will pay</h2>
-          <label className="flex items-center gap-2">
-            <span className="text-gray-500">&#8377;</span>
+
+          <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+            {rentCap === '' ? (
+              <p className="text-2xl font-semibold text-gray-400">Not set yet</p>
+            ) : (
+              <p className="text-2xl font-semibold">
+                &#8377;{Number(rentCap).toLocaleString('en-IN')}
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  a month, your share
+                </span>
+              </p>
+            )}
+
             <input
-              type="number"
-              min={1}
-              step={1}
-              value={rentCap}
+              type="range"
+              min={RENT_MIN}
+              max={RENT_MAX}
+              step={RENT_STEP}
+              // Sits mid-range until she moves it, but rentCap stays empty so an
+              // untouched slider cannot be submitted as if it were a real answer.
+              value={rentCap === '' ? RENT_DEFAULT : rentCap}
               onChange={(e) => setRentCap(e.target.value)}
-              placeholder="25000"
-              className="w-40 rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-transparent"
+              aria-label="The most rent you will pay per month"
+              className="mt-3 w-full accent-gray-900 dark:accent-white"
             />
-            <span className="text-sm text-gray-500">a month, your share</span>
-          </label>
+
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>&#8377;{RENT_MIN.toLocaleString('en-IN')}</span>
+              <span>
+                {rentCap === '' ? 'Drag to choose your cap' : 'Your share, not the whole flat'}
+              </span>
+              <span>&#8377;{RENT_MAX.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
         </section>
 
         <section className="space-y-3">
