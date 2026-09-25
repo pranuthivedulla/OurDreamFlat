@@ -11,15 +11,12 @@ export function personName(person: Person): string {
   return person.charAt(0).toUpperCase() + person.slice(1)
 }
 
-export const MAX_PLACES = 2
 export const MAX_DEALBREAKERS = 3
 
 /**
  * The fixed dealbreaker list from the brief. `needsNumber` entries carry a
- * value; the rest are yes/no. "Must be near a place I named" is not in this
- * list -- a place becomes a dealbreaker by being marked one in must_be_near,
- * and it then spends one of the three slots. One place to say it, so the count
- * cannot drift.
+ * value; the rest are yes/no. At most three of these may be chosen -- forcing
+ * that choice is the point of the tool.
  */
 export const DEALBREAKER_TYPES = [
   { id: 'lift', label: 'Lift required', needsNumber: false },
@@ -55,31 +52,17 @@ export type Constraint = {
   value: number | null
 }
 
-export type Place = {
-  label: string
-  area: string
-  max_mins: number
-  priority: 'dealbreaker' | 'nice_to_have'
-}
-
 export type ResponseInput = {
   rent_cap: number
   /** Areas she would like to live in. Ranks flats up; never drops one. */
   preferred_areas: string[]
-  /** Areas she refuses. Drops a flat for all three. A veto, not a preference. */
-  no_go_areas: string[]
-  must_be_near: Place[]
   dealbreakers: Constraint[]
   nice_to_haves: Constraint[]
 }
 
 /** How many of the three dealbreaker slots are spent. */
-export function dealbreakerCount(input: {
-  must_be_near: Place[]
-  dealbreakers: Constraint[]
-}): number {
-  const places = input.must_be_near.filter((p) => p.priority === 'dealbreaker').length
-  return input.dealbreakers.length + places
+export function dealbreakerCount(input: { dealbreakers: Constraint[] }): number {
+  return input.dealbreakers.length
 }
 
 /**
@@ -101,36 +84,7 @@ export function validateResponse(input: ResponseInput): string[] {
     errors.push('The same preferred area was listed twice.')
   }
 
-  for (const id of input.no_go_areas) {
-    if (!isKnownArea(id)) errors.push(`"${id}" is not an area on the list.`)
-  }
-  if (new Set(input.no_go_areas).size !== input.no_go_areas.length) {
-    errors.push('The same no-go area was listed twice.')
-  }
 
-  // An area cannot be both wanted and refused.
-  const both = input.preferred_areas.filter((id) => input.no_go_areas.includes(id))
-  if (both.length > 0) {
-    errors.push(
-      `You marked ${both.length === 1 ? 'an area' : 'areas'} as both preferred and a hard no.`
-    )
-  }
-
-  if (input.must_be_near.length > MAX_PLACES) {
-    errors.push(`At most ${MAX_PLACES} places you need to be near.`)
-  }
-  for (const place of input.must_be_near) {
-    if (!place.label.trim()) errors.push('Every place needs a label.')
-    if (!isKnownArea(place.area)) {
-      errors.push(`"${place.area}" is not an area on the list.`)
-    }
-    if (!Number.isInteger(place.max_mins) || place.max_mins <= 0) {
-      errors.push(`"${place.label}" needs a maximum travel time above zero.`)
-    }
-    if (place.priority !== 'dealbreaker' && place.priority !== 'nice_to_have') {
-      errors.push(`"${place.label}" must be marked a dealbreaker or a nice-to-have.`)
-    }
-  }
 
   const validDealbreakerIds = new Set<string>(DEALBREAKER_TYPES.map((d) => d.id))
   for (const constraint of input.dealbreakers) {
@@ -149,9 +103,7 @@ export function validateResponse(input: ResponseInput): string[] {
 
   const spent = dealbreakerCount(input)
   if (spent > MAX_DEALBREAKERS) {
-    errors.push(
-      `At most ${MAX_DEALBREAKERS} dealbreakers, including any place marked a dealbreaker. You have ${spent}.`
-    )
+    errors.push(`At most ${MAX_DEALBREAKERS} dealbreakers. You have ${spent}.`)
   }
 
   const validNiceIds = new Set<string>(NICE_TO_HAVE_TYPES.map((n) => n.id))

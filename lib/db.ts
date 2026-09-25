@@ -96,8 +96,6 @@ export async function submitResponse(
     person,
     rent_cap: input.rent_cap,
     preferred_areas: input.preferred_areas,
-    no_go_areas: input.no_go_areas,
-    must_be_near: input.must_be_near,
     dealbreakers: input.dealbreakers,
     nice_to_haves: input.nice_to_haves,
   })

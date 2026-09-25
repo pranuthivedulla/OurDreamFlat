@@ -3,12 +3,11 @@
 import { useActionState, useMemo, useState } from 'react'
 
 import { submitResponseAction, type SubmitState } from '@/app/actions'
-import { AREAS, ZONES, areasInZone } from '@/lib/areas'
+import { ZONES, areasInZone } from '@/lib/areas'
 import {
   DEALBREAKER_TYPES,
   EXTRA_TYPES,
   MAX_DEALBREAKERS,
-  MAX_PLACES,
   NICE_TO_HAVE_TYPES,
   personName,
   validateResponse,
@@ -25,18 +24,9 @@ const RENT_MAX = 40000
 const RENT_STEP = 1000
 const RENT_DEFAULT = 20000
 
-type PlaceDraft = {
-  label: string
-  area: string
-  maxMins: string
-  priority: 'dealbreaker' | 'nice_to_have'
-}
-
 export function ResponseForm({ searchId, person }: { searchId: string; person: Person }) {
   const [rentCap, setRentCap] = useState('')
   const [preferred, setPreferred] = useState<string[]>([])
-  const [noGo, setNoGo] = useState<string[]>([])
-  const [places, setPlaces] = useState<PlaceDraft[]>([])
   // One stance per parameter, rather than two separate tick-lists that both
   // contained the same rows.
   const [stances, setStances] = useState<Record<string, Stance>>({})
@@ -52,18 +42,11 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
     () => ({
       rent_cap: parseInt(rentCap, 10),
       preferred_areas: preferred,
-      no_go_areas: noGo,
-      must_be_near: places.map((p) => ({
-        label: p.label.trim(),
-        area: p.area,
-        max_mins: parseInt(p.maxMins, 10),
-        priority: p.priority,
-      })),
       dealbreakers: withStance('dealbreaker'),
       nice_to_haves: withStance('prefer'),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rentCap, preferred, noGo, places, stances, values]
+    [rentCap, preferred, stances, values]
   )
 
   function withStance(stance: Stance) {
@@ -80,22 +63,16 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
   // The same validator the server action runs. Enforced here so the UI can stop
   // a bad submit, and again on the server so a direct POST cannot get past it.
   const clientErrors = validateResponse(input)
-  const slotsSpent =
-    Object.values(stances).filter((s) => s === 'dealbreaker').length +
-    places.filter((p) => p.priority === 'dealbreaker').length
+  const slotsSpent = Object.values(stances).filter((s) => s === 'dealbreaker').length
   const slotsFull = slotsSpent >= MAX_DEALBREAKERS
   const errors = showErrors && clientErrors.length > 0 ? clientErrors : state.errors
 
-  function toggle(list: string[], setList: (next: string[]) => void, id: string) {
-    setList(list.includes(id) ? list.filter((x) => x !== id) : [...list, id])
+  function toggleArea(id: string) {
+    setPreferred(preferred.includes(id) ? preferred.filter((x) => x !== id) : [...preferred, id])
   }
 
   function setStance(id: string, stance: Stance) {
     setStances({ ...stances, [id]: stance })
-  }
-
-  function updatePlace(index: number, patch: Partial<PlaceDraft>) {
-    setPlaces(places.map((p, i) => (i === index ? { ...p, ...patch } : p)))
   }
 
   return (
@@ -159,8 +136,9 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
         <section className="space-y-3">
           <h2 className="text-lg font-medium">My preferable areas</h2>
           <p className="text-sm text-gray-500">
-            Where would you like to live? Tap a zone, or open it to pick single areas.
-            These rank flats higher &mdash; they never drop one, so choosing none is fine.
+            Where would you like to live? Pick the side of town that works for you
+            &mdash; near your office, or wherever you want to be. Flats in areas more
+            of you chose rank higher. These never drop a flat, so choosing none is fine.
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -210,7 +188,7 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
                         <input
                           type="checkbox"
                           checked={preferred.includes(area.id)}
-                          onChange={() => toggle(preferred, setPreferred, area.id)}
+                          onChange={() => toggleArea(area.id)}
                           className="h-4 w-4"
                         />
                         {area.name}
@@ -221,150 +199,6 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
               ))}
             </div>
           </details>
-
-          {/* The veto, kept separate and closed. It is a different thing from a
-              preference: it drops a flat for all three, so it must not be one tap
-              away from "I quite like Baner". */}
-          <details className="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
-            <summary className="cursor-pointer text-sm font-medium">
-              Anywhere that is a hard no?
-              <span className="ml-2 font-normal text-gray-500">
-                {noGo.length === 0
-                  ? 'Most people skip this'
-                  : `${noGo.length} area${noGo.length === 1 ? '' : 's'} ruled out`}
-              </span>
-            </summary>
-
-            <p className="mt-3 text-sm text-gray-500">
-              A flat anywhere you rule out is dropped for all three of you, so only use
-              this for somewhere you genuinely would not live. If it is really about
-              travel time, use the places section below instead.
-            </p>
-
-            <div className="mt-3 space-y-3">
-              {ZONES.map((zone) => (
-                <div key={zone.id}>
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    {zone.name}
-                  </p>
-                  <div className="mt-1 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
-                    {areasInZone(zone.id).map((area) => (
-                      <label key={area.id} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={noGo.includes(area.id)}
-                          onChange={() => toggle(noGo, setNoGo, area.id)}
-                          className="h-4 w-4"
-                        />
-                        {area.name}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </details>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-lg font-medium">Places you need to be near</h2>
-          <p className="text-sm text-gray-500">
-            Up to {MAX_PLACES}. Travel times are estimates from an area-to-area table,
-            not a live route.
-          </p>
-
-          {places.map((place, index) => (
-            <div
-              key={index}
-              className="space-y-3 rounded-xl border border-gray-200 p-4 dark:border-gray-800"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="text"
-                  value={place.label}
-                  onChange={(e) => updatePlace(index, { label: e.target.value })}
-                  placeholder="office"
-                  maxLength={60}
-                  className="w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-transparent"
-                />
-                <span className="text-sm text-gray-500">in</span>
-                <select
-                  value={place.area}
-                  onChange={(e) => updatePlace(index, { area: e.target.value })}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-transparent"
-                >
-                  <option value="">Pick an area</option>
-                  {AREAS.map((area) => (
-                    <option key={area.id} value={area.id}>
-                      {area.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-sm text-gray-500">within</span>
-                <input
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={place.maxMins}
-                  onChange={(e) => updatePlace(index, { maxMins: e.target.value })}
-                  placeholder="45"
-                  className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-transparent"
-                />
-                <span className="text-sm text-gray-500">mins</span>
-                <button
-                  type="button"
-                  onClick={() => setPlaces(places.filter((_, i) => i !== index))}
-                  className="ml-auto text-sm text-gray-500 underline underline-offset-4"
-                >
-                  Remove
-                </button>
-              </div>
-
-              <div className="flex flex-wrap gap-4 text-sm">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name={`priority-${index}`}
-                    checked={place.priority === 'dealbreaker'}
-                    disabled={place.priority !== 'dealbreaker' && slotsFull}
-                    onChange={() => updatePlace(index, { priority: 'dealbreaker' })}
-                    className="h-4 w-4"
-                  />
-                  Dealbreaker (spends a slot)
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name={`priority-${index}`}
-                    checked={place.priority === 'nice_to_have'}
-                    onChange={() => updatePlace(index, { priority: 'nice_to_have' })}
-                    className="h-4 w-4"
-                  />
-                  Nice to have
-                </label>
-              </div>
-            </div>
-          ))}
-
-          {places.length < MAX_PLACES && (
-            <button
-              type="button"
-              onClick={() =>
-                setPlaces([
-                  ...places,
-                  {
-                    label: '',
-                    area: '',
-                    maxMins: '',
-                    priority: slotsFull ? 'nice_to_have' : 'dealbreaker',
-                  },
-                ])
-              }
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium dark:border-gray-700"
-            >
-              Add a place
-            </button>
-          )}
         </section>
 
         <section className="space-y-3">

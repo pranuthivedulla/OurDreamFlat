@@ -46,15 +46,6 @@ export async function submitResponseAction(
     preferred_areas: Array.isArray(input?.preferred_areas)
       ? input.preferred_areas.map(String)
       : [],
-    no_go_areas: Array.isArray(input?.no_go_areas) ? input.no_go_areas.map(String) : [],
-    must_be_near: Array.isArray(input?.must_be_near)
-      ? input.must_be_near.map((p) => ({
-          label: String(p?.label ?? '').trim().slice(0, 60),
-          area: String(p?.area ?? ''),
-          max_mins: Number(p?.max_mins),
-          priority: p?.priority === 'dealbreaker' ? 'dealbreaker' : 'nice_to_have',
-        }))
-      : [],
     dealbreakers: Array.isArray(input?.dealbreakers)
       ? input.dealbreakers.map((c) => ({
           type: String(c?.type ?? ''),
