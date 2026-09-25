@@ -6,6 +6,7 @@ import { submitResponseAction, type SubmitState } from '@/app/actions'
 import { AREAS } from '@/lib/areas'
 import {
   DEALBREAKER_TYPES,
+  EXTRA_TYPES,
   MAX_DEALBREAKERS,
   MAX_PLACES,
   NICE_TO_HAVE_TYPES,
@@ -14,6 +15,9 @@ import {
   type Person,
   type ResponseInput,
 } from '@/lib/constraints'
+
+/** What a person said about one parameter. Nothing is stored for 'none'. */
+type Stance = 'dealbreaker' | 'prefer' | 'none'
 
 // Bounds for the rent slider. A per-person share, not the whole flat's rent.
 const RENT_MIN = 5000
@@ -32,10 +36,10 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
   const [rentCap, setRentCap] = useState('')
   const [noGo, setNoGo] = useState<string[]>([])
   const [places, setPlaces] = useState<PlaceDraft[]>([])
-  const [dbChosen, setDbChosen] = useState<string[]>([])
-  const [dbValues, setDbValues] = useState<Record<string, string>>({})
-  const [niceChosen, setNiceChosen] = useState<string[]>([])
-  const [niceValues, setNiceValues] = useState<Record<string, string>>({})
+  // One stance per parameter, rather than two separate tick-lists that both
+  // contained the same rows.
+  const [stances, setStances] = useState<Record<string, Stance>>({})
+  const [values, setValues] = useState<Record<string, string>>({})
   const [showErrors, setShowErrors] = useState(false)
 
   const [state, formAction, pending] = useActionState<SubmitState, FormData>(
@@ -53,31 +57,39 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
         max_mins: parseInt(p.maxMins, 10),
         priority: p.priority,
       })),
-      dealbreakers: dbChosen.map((id) => ({
-        type: id,
-        value: DEALBREAKER_TYPES.find((d) => d.id === id)?.needsNumber
-          ? parseInt(dbValues[id] ?? '', 10)
-          : null,
-      })),
-      nice_to_haves: niceChosen.map((id) => ({
-        type: id,
-        value: NICE_TO_HAVE_TYPES.find((n) => n.id === id)?.needsNumber
-          ? parseInt(niceValues[id] ?? '', 10)
-          : null,
-      })),
+      dealbreakers: withStance('dealbreaker'),
+      nice_to_haves: withStance('prefer'),
     }),
-    [rentCap, noGo, places, dbChosen, dbValues, niceChosen, niceValues]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rentCap, noGo, places, stances, values]
   )
+
+  function withStance(stance: Stance) {
+    return Object.entries(stances)
+      .filter(([, s]) => s === stance)
+      .map(([id]) => ({
+        type: id,
+        value: NICE_TO_HAVE_TYPES.find((t) => t.id === id)?.needsNumber
+          ? parseInt(values[id] ?? '', 10)
+          : null,
+      }))
+  }
 
   // The same validator the server action runs. Enforced here so the UI can stop
   // a bad submit, and again on the server so a direct POST cannot get past it.
   const clientErrors = validateResponse(input)
-  const slotsSpent = dbChosen.length + places.filter((p) => p.priority === 'dealbreaker').length
+  const slotsSpent =
+    Object.values(stances).filter((s) => s === 'dealbreaker').length +
+    places.filter((p) => p.priority === 'dealbreaker').length
   const slotsFull = slotsSpent >= MAX_DEALBREAKERS
   const errors = showErrors && clientErrors.length > 0 ? clientErrors : state.errors
 
   function toggle(list: string[], setList: (next: string[]) => void, id: string) {
     setList(list.includes(id) ? list.filter((x) => x !== id) : [...list, id])
+  }
+
+  function setStance(id: string, stance: Stance) {
+    setStances({ ...stances, [id]: stance })
   }
 
   function updatePlace(index: number, patch: Partial<PlaceDraft>) {
@@ -264,72 +276,51 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-medium">Your dealbreakers</h2>
+          <h2 className="text-lg font-medium">What the flat needs</h2>
           <p className="text-sm text-gray-500">
-            {MAX_DEALBREAKERS} at most, including any place above marked a dealbreaker.
-            You have used {slotsSpent} of {MAX_DEALBREAKERS}. Choosing is the point
-            &mdash; a flat that breaks any of these is dropped.
+            For each one: a dealbreaker drops any flat that fails it, preferred just
+            ranks the flats that survive, and don&rsquo;t care is ignored entirely.
           </p>
-          <div className="space-y-2">
-            {DEALBREAKER_TYPES.map((spec) => {
-              const chosen = dbChosen.includes(spec.id)
-              return (
-                <label key={spec.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={chosen}
-                    disabled={!chosen && slotsFull}
-                    onChange={() => toggle(dbChosen, setDbChosen, spec.id)}
-                    className="h-4 w-4"
-                  />
-                  <span className={!chosen && slotsFull ? 'text-gray-400' : ''}>{spec.label}</span>
-                  {spec.needsNumber && chosen && (
-                    <input
-                      type="number"
-                      min={1}
-                      step={1}
-                      value={dbValues[spec.id] ?? ''}
-                      onChange={(e) => setDbValues({ ...dbValues, [spec.id]: e.target.value })}
-                      className="w-20 rounded-lg border border-gray-300 px-2 py-1 dark:border-gray-700 dark:bg-transparent"
-                    />
-                  )}
-                </label>
-              )
-            })}
-          </div>
-        </section>
+          <p className="text-sm font-medium">
+            Dealbreakers used: {slotsSpent} of {MAX_DEALBREAKERS}
+            {slotsFull && (
+              <span className="ml-2 font-normal text-gray-500">
+                &mdash; all spent. Drop one to mark another.
+              </span>
+            )}
+          </p>
 
-        <section className="space-y-3">
-          <h2 className="text-lg font-medium">Nice to have</h2>
-          <p className="text-sm text-gray-500">
-            As many as you like. These rank the flats that survive; they never drop one.
-          </p>
-          <div className="space-y-2">
-            {NICE_TO_HAVE_TYPES.map((spec) => {
-              const chosen = niceChosen.includes(spec.id)
-              return (
-                <label key={spec.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={chosen}
-                    onChange={() => toggle(niceChosen, setNiceChosen, spec.id)}
-                    className="h-4 w-4"
-                  />
-                  {spec.label}
-                  {spec.needsNumber && chosen && (
-                    <input
-                      type="number"
-                      min={1}
-                      step={1}
-                      value={niceValues[spec.id] ?? ''}
-                      onChange={(e) => setNiceValues({ ...niceValues, [spec.id]: e.target.value })}
-                      className="w-20 rounded-lg border border-gray-300 px-2 py-1 dark:border-gray-700 dark:bg-transparent"
-                    />
-                  )}
-                </label>
-              )
-            })}
+          <div className="divide-y divide-gray-200 rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+            {DEALBREAKER_TYPES.map((spec) => (
+              <ParamRow
+                key={spec.id}
+                label={spec.label}
+                stance={stances[spec.id] ?? 'none'}
+                onStance={(s) => setStance(spec.id, s)}
+                dealbreakerAllowed
+                dealbreakerDisabled={slotsFull && stances[spec.id] !== 'dealbreaker'}
+                numberValue={spec.needsNumber ? (values[spec.id] ?? '') : null}
+                onNumber={(v) => setValues({ ...values, [spec.id]: v })}
+              />
+            ))}
+            {EXTRA_TYPES.map((spec) => (
+              <ParamRow
+                key={spec.id}
+                label={spec.label}
+                stance={stances[spec.id] ?? 'none'}
+                onStance={(s) => setStance(spec.id, s)}
+                dealbreakerAllowed={false}
+                dealbreakerDisabled
+                numberValue={null}
+                onNumber={() => {}}
+              />
+            ))}
           </div>
+
+          <p className="text-xs text-gray-500">
+            The five above the line are the only ones that can be dealbreakers. The
+            rest rank flats, they never drop one.
+          </p>
         </section>
 
         {errors.length > 0 && (
@@ -352,5 +343,81 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
         </p>
       </form>
     </main>
+  )
+}
+
+/**
+ * One parameter, one decision. Extras render two buttons rather than three,
+ * because the brief fixes the dealbreaker list at five and they are not on it.
+ */
+function ParamRow({
+  label,
+  stance,
+  onStance,
+  dealbreakerAllowed,
+  dealbreakerDisabled,
+  numberValue,
+  onNumber,
+}: {
+  label: string
+  stance: Stance
+  onStance: (s: Stance) => void
+  dealbreakerAllowed: boolean
+  dealbreakerDisabled: boolean
+  numberValue: string | null
+  onNumber: (v: string) => void
+}) {
+  const options: { id: Stance; text: string }[] = [
+    ...(dealbreakerAllowed ? [{ id: 'dealbreaker' as Stance, text: 'Dealbreaker' }] : []),
+    { id: 'prefer', text: 'Preferred' },
+    { id: 'none', text: "Don't care" },
+  ]
+
+  const tone: Record<Stance, string> = {
+    dealbreaker: 'bg-red-600 text-white border-red-600',
+    prefer: 'bg-emerald-600 text-white border-emerald-600',
+    none: 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white',
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 p-3">
+      <span className="text-sm">
+        {label}
+        {numberValue !== null && stance !== 'none' && (
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={numberValue}
+            onChange={(e) => onNumber(e.target.value)}
+            aria-label={`${label} — how many`}
+            className="ml-2 w-16 rounded-lg border border-gray-300 px-2 py-1 dark:border-gray-700 dark:bg-transparent"
+          />
+        )}
+      </span>
+
+      <div className="flex gap-1" role="group" aria-label={label}>
+        {options.map((option) => {
+          const active = stance === option.id
+          const disabled = option.id === 'dealbreaker' && dealbreakerDisabled
+          return (
+            <button
+              key={option.id}
+              type="button"
+              disabled={disabled}
+              aria-pressed={active}
+              onClick={() => onStance(option.id)}
+              className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
+                active
+                  ? tone[option.id]
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
+              }`}
+            >
+              {option.text}
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }

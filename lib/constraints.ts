@@ -31,15 +31,22 @@ export const DEALBREAKER_TYPES = [
 
 export type DealbreakerTypeId = (typeof DEALBREAKER_TYPES)[number]['id']
 
-/** The dealbreaker list plus extras. Any number of these may be chosen. */
-export const NICE_TO_HAVE_TYPES = [
-  ...DEALBREAKER_TYPES,
+/**
+ * Things that can only ever be a preference, never a dealbreaker -- the
+ * dealbreaker list above is fixed and these are not on it. Every entry maps to
+ * a field a listing actually carries; a parameter nothing can be checked
+ * against would be decoration, since it could neither drop a flat nor rank one.
+ */
+export const EXTRA_TYPES = [
   { id: 'balcony', label: 'Balcony', needsNumber: false },
   { id: 'furnished', label: 'Furnished', needsNumber: false },
   { id: 'gym', label: 'Gym in building', needsNumber: false },
   { id: 'power_backup', label: 'Power backup', needsNumber: false },
   { id: 'security', label: '24x7 security', needsNumber: false },
 ] as const
+
+/** The dealbreaker list plus extras. Any number of these may be chosen. */
+export const NICE_TO_HAVE_TYPES = [...DEALBREAKER_TYPES, ...EXTRA_TYPES] as const
 
 export type NiceToHaveTypeId = (typeof NICE_TO_HAVE_TYPES)[number]['id']
 
