@@ -18,6 +18,7 @@ create table public.responses (
   search_id     text not null references public.searches(id) on delete cascade,
   person        text not null check (person in ('riya', 'meera', 'kavita')),
   rent_cap      integer not null check (rent_cap > 0),
+  preferred_areas jsonb not null default '[]'::jsonb,
   no_go_areas   jsonb   not null default '[]'::jsonb,
   must_be_near  jsonb   not null default '[]'::jsonb,
   dealbreakers  jsonb   not null default '[]'::jsonb,

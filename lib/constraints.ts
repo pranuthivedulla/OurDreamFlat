@@ -64,6 +64,9 @@ export type Place = {
 
 export type ResponseInput = {
   rent_cap: number
+  /** Areas she would like to live in. Ranks flats up; never drops one. */
+  preferred_areas: string[]
+  /** Areas she refuses. Drops a flat for all three. A veto, not a preference. */
   no_go_areas: string[]
   must_be_near: Place[]
   dealbreakers: Constraint[]
@@ -91,11 +94,26 @@ export function validateResponse(input: ResponseInput): string[] {
     errors.push('Set the most rent you will pay.')
   }
 
+  for (const id of input.preferred_areas) {
+    if (!isKnownArea(id)) errors.push(`"${id}" is not an area on the list.`)
+  }
+  if (new Set(input.preferred_areas).size !== input.preferred_areas.length) {
+    errors.push('The same preferred area was listed twice.')
+  }
+
   for (const id of input.no_go_areas) {
     if (!isKnownArea(id)) errors.push(`"${id}" is not an area on the list.`)
   }
   if (new Set(input.no_go_areas).size !== input.no_go_areas.length) {
     errors.push('The same no-go area was listed twice.')
+  }
+
+  // An area cannot be both wanted and refused.
+  const both = input.preferred_areas.filter((id) => input.no_go_areas.includes(id))
+  if (both.length > 0) {
+    errors.push(
+      `You marked ${both.length === 1 ? 'an area' : 'areas'} as both preferred and a hard no.`
+    )
   }
 
   if (input.must_be_near.length > MAX_PLACES) {

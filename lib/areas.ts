@@ -5,6 +5,24 @@ export type Area = {
   name: string
   lat: number
   lng: number
+  zone: string
+}
+
+/**
+ * Zones exist only so the picker can ask five questions instead of twenty.
+ * Nothing downstream knows about them: no-go matching, commute lookup and
+ * listing.area all still work on area id.
+ */
+export const ZONES: { id: string; name: string; hint: string }[] = [
+  { id: 'west', name: 'West / IT belt', hint: 'Hinjewadi, Wakad, Baner, Aundh' },
+  { id: 'pcmc', name: 'PCMC', hint: 'Pimple Saudagar, Pimpri-Chinchwad' },
+  { id: 'central', name: 'Central', hint: 'Shivajinagar, Kothrud, Warje' },
+  { id: 'east', name: 'East', hint: 'Koregaon Park, Viman Nagar, Kharadi' },
+  { id: 'south', name: 'South-east', hint: 'Hadapsar, Wanowrie, Kondhwa' },
+]
+
+export function areasInZone(zoneId: string): Area[] {
+  return AREAS.filter((a) => a.zone === zoneId)
 }
 
 /**

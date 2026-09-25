@@ -43,6 +43,9 @@ export async function submitResponseAction(
   // unexpected shapes and have them stored verbatim.
   const clean: ResponseInput = {
     rent_cap: Number(input?.rent_cap),
+    preferred_areas: Array.isArray(input?.preferred_areas)
+      ? input.preferred_areas.map(String)
+      : [],
     no_go_areas: Array.isArray(input?.no_go_areas) ? input.no_go_areas.map(String) : [],
     must_be_near: Array.isArray(input?.must_be_near)
       ? input.must_be_near.map((p) => ({

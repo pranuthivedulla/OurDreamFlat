@@ -95,6 +95,7 @@ export async function submitResponse(
     search_id: searchId,
     person,
     rent_cap: input.rent_cap,
+    preferred_areas: input.preferred_areas,
     no_go_areas: input.no_go_areas,
     must_be_near: input.must_be_near,
     dealbreakers: input.dealbreakers,

@@ -3,7 +3,7 @@
 import { useActionState, useMemo, useState } from 'react'
 
 import { submitResponseAction, type SubmitState } from '@/app/actions'
-import { AREAS } from '@/lib/areas'
+import { AREAS, ZONES, areasInZone } from '@/lib/areas'
 import {
   DEALBREAKER_TYPES,
   EXTRA_TYPES,
@@ -34,6 +34,7 @@ type PlaceDraft = {
 
 export function ResponseForm({ searchId, person }: { searchId: string; person: Person }) {
   const [rentCap, setRentCap] = useState('')
+  const [preferred, setPreferred] = useState<string[]>([])
   const [noGo, setNoGo] = useState<string[]>([])
   const [places, setPlaces] = useState<PlaceDraft[]>([])
   // One stance per parameter, rather than two separate tick-lists that both
@@ -50,6 +51,7 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
   const input: ResponseInput = useMemo(
     () => ({
       rent_cap: parseInt(rentCap, 10),
+      preferred_areas: preferred,
       no_go_areas: noGo,
       must_be_near: places.map((p) => ({
         label: p.label.trim(),
@@ -61,7 +63,7 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
       nice_to_haves: withStance('prefer'),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rentCap, noGo, places, stances, values]
+    [rentCap, preferred, noGo, places, stances, values]
   )
 
   function withStance(stance: Stance) {
@@ -155,23 +157,113 @@ export function ResponseForm({ searchId, person }: { searchId: string; person: P
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-medium">Areas you will not consider</h2>
+          <h2 className="text-lg font-medium">My preferable areas</h2>
           <p className="text-sm text-gray-500">
-            Pick from the list. A flat in any of these is dropped for everyone.
+            Where would you like to live? Tap a zone, or open it to pick single areas.
+            These rank flats higher &mdash; they never drop one, so choosing none is fine.
           </p>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
-            {AREAS.map((area) => (
-              <label key={area.id} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={noGo.includes(area.id)}
-                  onChange={() => toggle(noGo, setNoGo, area.id)}
-                  className="h-4 w-4"
-                />
-                {area.name}
-              </label>
-            ))}
+
+          <div className="flex flex-wrap gap-2">
+            {ZONES.map((zone) => {
+              const ids = areasInZone(zone.id).map((a) => a.id)
+              const all = ids.every((id) => preferred.includes(id))
+              const some = !all && ids.some((id) => preferred.includes(id))
+              return (
+                <button
+                  key={zone.id}
+                  type="button"
+                  onClick={() =>
+                    setPreferred(
+                      all
+                        ? preferred.filter((id) => !ids.includes(id))
+                        : [...new Set([...preferred, ...ids])]
+                    )
+                  }
+                  aria-pressed={all}
+                  title={zone.hint}
+                  className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                    all
+                      ? 'border-emerald-600 bg-emerald-600 text-white'
+                      : some
+                        ? 'border-emerald-500 text-emerald-700 dark:text-emerald-400'
+                        : 'border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  {zone.name}
+                  {some && <span className="ml-1 text-xs">(some)</span>}
+                </button>
+              )
+            })}
           </div>
+
+          <details className="text-sm">
+            <summary className="cursor-pointer text-gray-500">Pick single areas instead</summary>
+            <div className="mt-3 space-y-3">
+              {ZONES.map((zone) => (
+                <div key={zone.id}>
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    {zone.name}
+                  </p>
+                  <div className="mt-1 grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3">
+                    {areasInZone(zone.id).map((area) => (
+                      <label key={area.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={preferred.includes(area.id)}
+                          onChange={() => toggle(preferred, setPreferred, area.id)}
+                          className="h-4 w-4"
+                        />
+                        {area.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+
+          {/* The veto, kept separate and closed. It is a different thing from a
+              preference: it drops a flat for all three, so it must not be one tap
+              away from "I quite like Baner". */}
+          <details className="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+            <summary className="cursor-pointer text-sm font-medium">
+              Anywhere that is a hard no?
+              <span className="ml-2 font-normal text-gray-500">
+                {noGo.length === 0
+                  ? 'Most people skip this'
+                  : `${noGo.length} area${noGo.length === 1 ? '' : 's'} ruled out`}
+              </span>
+            </summary>
+
+            <p className="mt-3 text-sm text-gray-500">
+              A flat anywhere you rule out is dropped for all three of you, so only use
+              this for somewhere you genuinely would not live. If it is really about
+              travel time, use the places section below instead.
+            </p>
+
+            <div className="mt-3 space-y-3">
+              {ZONES.map((zone) => (
+                <div key={zone.id}>
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    {zone.name}
+                  </p>
+                  <div className="mt-1 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
+                    {areasInZone(zone.id).map((area) => (
+                      <label key={area.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={noGo.includes(area.id)}
+                          onChange={() => toggle(noGo, setNoGo, area.id)}
+                          className="h-4 w-4"
+                        />
+                        {area.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
         </section>
 
         <section className="space-y-3">
