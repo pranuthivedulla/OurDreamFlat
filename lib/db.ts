@@ -188,7 +188,12 @@ export async function startLiveFetch(searchId: string, source: ListingSource): P
   if (error) throw new Error(`Could not save the run: ${error.message}`)
 }
 
-export type LiveFetch = { state: 'idle' } | { state: 'running' } | { state: 'failed'; why: string }
+export type LiveFetch =
+  | { state: 'idle' }
+  | { state: 'running' }
+  | { state: 'failed'; why: string }
+  /** The live-listings columns are not in this database, so only demo data works. */
+  | { state: 'unavailable' }
 
 /**
  * Called on every status-page render while a run is outstanding. Checks the
@@ -203,7 +208,10 @@ export async function pollLiveFetch(searchId: string): Promise<LiveFetch> {
     .select('apify_run_id, apify_dataset_id, listings_source')
     .eq('id', searchId)
     .maybeSingle()
-  if (error) throw new Error(`Could not read the run: ${error.message}`)
+
+  // Degrade instead of failing when migration 003 has not been run. Without
+  // this the whole results page 500s on a database that is otherwise fine.
+  if (error) return { state: 'unavailable' }
   if (!data?.apify_run_id) return { state: 'idle' }
 
   const state = await getRunState(data.apify_run_id)

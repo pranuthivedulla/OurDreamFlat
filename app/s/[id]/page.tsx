@@ -113,6 +113,7 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
+                {fetchState.state !== 'unavailable' && (
                 <form action={fetchLiveListingsAction}>
                   <input type="hidden" name="searchId" value={id} />
                   <input type="hidden" name="source" value="magicbricks" />
@@ -120,6 +121,8 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
                     Fetch live flats · MagicBricks
                   </button>
                 </form>
+                )}
+                {fetchState.state !== 'unavailable' && (
                 <form action={fetchLiveListingsAction}>
                   <input type="hidden" name="searchId" value={id} />
                   <input type="hidden" name="source" value="nobroker" />
@@ -130,19 +133,25 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
                     NoBroker instead
                   </button>
                 </form>
+                )}
                 <form action={loadDemoListingsAction}>
                   <input type="hidden" name="searchId" value={id} />
                   <button
                     type="submit"
-                    className="rounded-full border border-line bg-field px-6 py-3.5 text-sm font-bold text-ink-soft transition hover:border-ink-faint hover:text-ink"
+                    className={
+                      fetchState.state === 'unavailable'
+                        ? 'btn-primary'
+                        : 'rounded-full border border-line bg-field px-6 py-3.5 text-sm font-bold text-ink-soft transition hover:border-ink-faint hover:text-ink'
+                    }
                   >
                     Use demo flats
                   </button>
                 </form>
               </div>
               <p className="mt-3 text-xs text-ink-faint">
-                A live fetch pulls 15 listings and costs a few pence of Apify credit.
-                The demo flats cost nothing.
+                {fetchState.state === 'unavailable'
+                  ? 'Live fetching is switched off until migration 003 has been run on the database.'
+                  : 'A live fetch pulls 15 listings and costs a few pence of Apify credit. The demo flats cost nothing.'}
               </p>
             </>
           ) : (
