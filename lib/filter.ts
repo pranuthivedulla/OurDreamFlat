@@ -1,10 +1,4 @@
-import { areaName } from './areas'
-import {
-  NICE_TO_HAVE_TYPES,
-  personName,
-  type Constraint,
-  type Person,
-} from './constraints'
+import { NICE_TO_HAVE_TYPES, personName, type Constraint, type Person } from './constraints'
 
 /**
  * The filter engine. Plain code, no AI, and deterministic: the same three
@@ -79,6 +73,38 @@ export type Shortlist = {
 }
 
 const label = (type: string) => NICE_TO_HAVE_TYPES.find((t) => t.id === type)?.label ?? type
+
+/**
+ * How a constraint reads inside "one of you gets ..." / "one of you gives up
+ * ...". The catalogue labels are form labels ("Lift required") and read badly
+ * in a sentence.
+ */
+function phrase(type: string, value: number | null): string {
+  switch (type) {
+    case 'lift':
+      return 'a lift'
+    case 'parking':
+      return 'parking'
+    case 'bathrooms':
+      return value ? `${value} bathrooms or more` : 'enough bathrooms'
+    case 'pet_friendly':
+      return 'a pet-friendly flat'
+    case 'max_floor':
+      return value ? `a floor no higher than ${value}` : 'a low enough floor'
+    case 'balcony':
+      return 'a balcony'
+    case 'furnished':
+      return 'a furnished place'
+    case 'gym':
+      return 'a gym in the building'
+    case 'power_backup':
+      return 'power backup'
+    case 'security':
+      return '24x7 security'
+    default:
+      return label(type).toLowerCase()
+  }
+}
 
 /**
  * Does this listing satisfy one constraint?
@@ -158,21 +184,23 @@ export function buildShortlist(responses: Response[], listings: Listing[]): Shor
             reason: `${personName(response.person)}'s dealbreaker: ${label(constraint.type)}${constraint.value ? ` (${constraint.value})` : ''}`,
           })
         } else {
-          gets.push(label(constraint.type))
+          gets.push(phrase(constraint.type, constraint.value))
         }
       }
 
       for (const constraint of response.nice_to_haves) {
         const result = meets(listing, constraint)
         if (result === null) unknowns.push(`${label(constraint.type)} not stated`)
-        else if (result) gets.push(label(constraint.type))
-        else givesUp.push(label(constraint.type))
+        else if (result) gets.push(phrase(constraint.type, constraint.value))
+        else givesUp.push(phrase(constraint.type, constraint.value))
       }
 
+      // Neutral wording, because these are aggregated across the three of them
+      // on screen and must not read as belonging to anyone in particular.
       const areaPreferred = listing.area !== null && response.preferred_areas.includes(listing.area)
-      if (areaPreferred) gets.push(`${areaName(listing.area!)}, an area you chose`)
+      if (areaPreferred) gets.push('an area they picked')
       else if (listing.area !== null && response.preferred_areas.length > 0) {
-        givesUp.push(`${areaName(listing.area)} is not one of your areas`)
+        givesUp.push('living in one of the areas they picked')
       }
 
       // Score counts only what was positively confirmed. An unknown never
@@ -255,4 +283,32 @@ function explainShortfall(
 
   void total
   return { reason: labels.get(key)!, blocked, wouldQualify }
+}
+
+/**
+ * Collapse the per-person views into counts, so a card can say "one of you
+ * gives up a balcony" without saying which one.
+ *
+ * This is deliberately lossy. The brief asks for a per-person breakdown, and
+ * this gives that up on purpose: naming who compromised turns a shared
+ * decision into a account of who owes whom.
+ */
+export type Tally = { text: string; count: number; total: number }
+
+export function tally(verdict: Verdict): { gets: Tally[]; givesUp: Tally[] } {
+  const total = verdict.perPerson.length
+  const count = (pick: (v: PersonView) => string[]) => {
+    const counts = new Map<string, number>()
+    for (const view of verdict.perPerson) {
+      for (const item of new Set(pick(view))) {
+        counts.set(item, (counts.get(item) ?? 0) + 1)
+      }
+    }
+    return [...counts.entries()]
+      .map(([text, n]) => ({ text, count: n, total }))
+      // Most widely shared first, then alphabetical so the order never wobbles.
+      .sort((a, b) => b.count - a.count || a.text.localeCompare(b.text))
+  }
+
+  return { gets: count((v) => v.gets), givesUp: count((v) => v.givesUp) }
 }

@@ -1,6 +1,5 @@
 import { areaName } from '@/lib/areas'
-import { personName } from '@/lib/constraints'
-import { SHORTLIST_SIZE, type Shortlist } from '@/lib/filter'
+import { SHORTLIST_SIZE, tally, type Tally, type Shortlist } from '@/lib/filter'
 
 const rupees = (n: number) => `₹${n.toLocaleString('en-IN')}`
 
@@ -36,6 +35,10 @@ export function Results({ result }: { result: Shortlist }) {
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
           Shown side by side, as equals, in no particular order of merit. Between you, you can
           cover {rupees(result.maxRent)} a month. The app does not pick &mdash; you three do.
+        </p>
+        <p className="mt-1 text-sm text-gray-500">
+          Trade-offs are shown as counts, never names: you can see what a flat costs
+          someone without learning who to feel bad about.
         </p>
       </div>
 
@@ -74,21 +77,7 @@ export function Results({ result }: { result: Shortlist }) {
               </ul>
             )}
 
-            <div className="space-y-3">
-              {verdict.perPerson.map((view) => (
-                <div key={view.person} className="text-sm">
-                  <p className="font-medium">{personName(view.person)}</p>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    <span className="text-emerald-700 dark:text-emerald-400">Gets</span>{' '}
-                    {view.gets.length > 0 ? view.gets.join(', ') : 'nothing she asked for'}.
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    <span className="text-red-700 dark:text-red-400">Gives up</span>{' '}
-                    {view.givesUp.length > 0 ? view.givesUp.join(', ') : 'nothing she asked for'}.
-                  </p>
-                </div>
-              ))}
-            </div>
+            <TradeOffs {...tally(verdict)} />
 
             {verdict.listing.url && (
               <a
@@ -111,6 +100,51 @@ export function Results({ result }: { result: Shortlist }) {
         suit all three of you best are shown. Anything marked &ldquo;not stated&rdquo; was
         kept and flagged, never assumed.
       </p>
+    </div>
+  )
+}
+
+/** How many of you, never which of you. */
+function who(count: number, total: number): string {
+  if (count === total) return 'All three'
+  if (count === 1) return 'One of you'
+  return `${count} of you`
+}
+
+function TradeOffs({ gets, givesUp }: { gets: Tally[]; givesUp: Tally[] }) {
+  return (
+    <div className="space-y-3 text-sm">
+      <div>
+        <p className="font-medium text-emerald-700 dark:text-emerald-400">Gets</p>
+        {gets.length === 0 ? (
+          <p className="text-gray-600 dark:text-gray-400">Nothing anyone asked for.</p>
+        ) : (
+          <ul className="space-y-0.5 text-gray-600 dark:text-gray-400">
+            {gets.map((item) => (
+              <li key={item.text}>
+                {who(item.count, item.total)} {item.count === 1 ? 'gets' : 'get'}{' '}
+                {item.text}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <p className="font-medium text-red-700 dark:text-red-400">Gives up</p>
+        {givesUp.length === 0 ? (
+          <p className="text-gray-600 dark:text-gray-400">Nobody gives up anything they named.</p>
+        ) : (
+          <ul className="space-y-0.5 text-gray-600 dark:text-gray-400">
+            {givesUp.map((item) => (
+              <li key={item.text}>
+                {who(item.count, item.total)} {item.count === 1 ? 'gives' : 'give'} up{' '}
+                {item.text}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }
