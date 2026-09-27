@@ -140,6 +140,15 @@ Two sources, one mapper, one engine. `mapListing()` in `lib/listings-source.ts`
 turns either into a `listings` row, so nothing downstream knows or cares which
 one it came from.
 
+**The feasibility check said this would be the weak half, and it was right.**
+Asked "input available?", it answered PARTLY: each person's constraints, yes —
+a form collects those. Listings, no. The major Indian portals publish no open
+data feed, so the only route is scraping, which is fragile and generally
+against their terms. Everything below is that missing feed showing up in
+practice. The constraint half of this app is solid; the listings half rests on
+a workaround, and that asymmetry is structural rather than something more work
+would fix.
+
 **This is a scraper, not an API, and that is the binding limit.** There is no
 contract and no deprecation notice: MagicBricks can change its markup any
 morning and the actor returns nothing — or worse, returns shifted fields while
