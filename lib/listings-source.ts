@@ -28,6 +28,7 @@ export type RawListing = {
   longitude?: number
   listed_by?: string
   amenities?: string[]
+  images?: string[]
   url?: string
   posted_at?: string
 }
@@ -47,6 +48,9 @@ export type MappedListing = {
   /** Human-readable notes about what could not be determined. Never a guess. */
   unknowns: string[]
 }
+
+/** Marks an extras entry as a photo URL rather than an amenity. */
+export const IMAGE_PREFIX = 'img:'
 
 const LIFT_WORDS = ['lift', 'elevator']
 const PARKING_WORDS = ['parking', 'garage']
@@ -125,6 +129,11 @@ export function mapListing(raw: RawListing): MappedListing {
       ...(raw.amenities ?? []).filter((a) => /[a-z]/i.test(a)),
       ...(raw.furnishing ? [raw.furnishing] : []),
       ...(typeof raw.balconies === 'number' && raw.balconies > 0 ? ['Balcony'] : []),
+      // The photo rides here behind a prefix rather than in its own column, so
+      // this needs no migration and cannot break an insert on a database that
+      // has not had one run. IMAGE_PREFIX entries are filtered out everywhere
+      // extras are matched against amenities.
+      ...(raw.images?.[0] ? [IMAGE_PREFIX + raw.images[0]] : []),
     ],
     unknowns,
   }

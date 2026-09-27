@@ -1,5 +1,5 @@
 {
-  "note": "Fake Pune listings in the EXACT output shape of apify/thirdwatch~nobroker-scraper, so lib/listings-source.ts maps demo and live data through identical code. Every field name here is copied from that actor's documented schema. Fields are omitted (not nulled) when unknown, which is what the real actor does -- that is deliberate, because it is how NULLs reach the database. Edge cases are marked in _demoNote, which the mapper ignores.",
+  "note": "Fake Pune listings in the EXACT output shape of apify/thirdwatch~nobroker-scraper, so lib/listings-source.ts maps demo and live data through identical code. Every field name here is copied from that actor's documented schema. Fields are omitted (not nulled) when unknown, which is what the real actor does -- that is deliberate, because it is how NULLs reach the database. Edge cases are marked in _demoNote, which the mapper ignores. Images are Unsplash stock photos: these flats do not exist, so no real photo could be honest. The card labels them as stock.",
   "items": [
     {
       "_demoNote": "Ordinary good fit. Lift and parking both stated.",
@@ -21,8 +21,15 @@
       "longitude": 73.787,
       "project_name": "Sai Radhe Residency",
       "listed_by": "owner",
-      "amenities": ["Lift", "Covered Parking", "Power Backup", "Gym"],
-      "images": [],
+      "amenities": [
+        "Lift",
+        "Covered Parking",
+        "Power Backup",
+        "Gym"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0001",
       "posted_at": "2026-09-10",
       "scraped_at": "2026-09-25T06:00:00+00:00"
@@ -45,8 +52,13 @@
       "latitude": 18.5074,
       "longitude": 73.8077,
       "listed_by": "owner",
-      "amenities": ["Covered Parking", "24x7 Security"],
-      "images": [],
+      "amenities": [
+        "Covered Parking",
+        "24x7 Security"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1564078516393-cf04bd966897?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0002",
       "posted_at": "2026-09-14",
       "scraped_at": "2026-09-25T06:00:00+00:00"
@@ -64,7 +76,9 @@
       "latitude": 18.575,
       "longitude": 73.769,
       "listed_by": "owner",
-      "images": [],
+      "images": [
+        "https://images.unsplash.com/photo-1628592102751-ba83b0314276?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0003",
       "scraped_at": "2026-09-25T06:00:00+00:00"
     },
@@ -86,8 +100,15 @@
       "latitude": 18.5515,
       "longitude": 73.947,
       "listed_by": "owner",
-      "amenities": ["Lift", "Covered Parking", "Gym", "Swimming Pool"],
-      "images": [],
+      "amenities": [
+        "Lift",
+        "Covered Parking",
+        "Gym",
+        "Swimming Pool"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1613575831056-0acd5da8f085?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0004",
       "posted_at": "2026-09-01",
       "scraped_at": "2026-09-25T06:00:00+00:00"
@@ -110,8 +131,16 @@
       "latitude": 18.5362,
       "longitude": 73.8939,
       "listed_by": "owner",
-      "amenities": ["Lift", "Covered Parking", "Gym", "Power Backup", "24x7 Security"],
-      "images": [],
+      "amenities": [
+        "Lift",
+        "Covered Parking",
+        "Gym",
+        "Power Backup",
+        "24x7 Security"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1665249934445-1de680641f50?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0005",
       "posted_at": "2026-08-28",
       "scraped_at": "2026-09-25T06:00:00+00:00"
@@ -134,8 +163,12 @@
       "latitude": 18.482,
       "longitude": 73.799,
       "listed_by": "owner",
-      "amenities": ["Open Parking"],
-      "images": [],
+      "amenities": [
+        "Open Parking"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1589834390005-5d4fb9bf3d32?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0006",
       "posted_at": "2026-09-19",
       "scraped_at": "2026-09-25T06:00:00+00:00"
@@ -158,8 +191,14 @@
       "latitude": 18.5913,
       "longitude": 73.7389,
       "listed_by": "owner",
-      "amenities": ["Lift", "Covered Parking", "Power Backup"],
-      "images": [],
+      "amenities": [
+        "Lift",
+        "Covered Parking",
+        "Power Backup"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0007",
       "posted_at": "2026-09-16",
       "scraped_at": "2026-09-25T06:00:00+00:00"
@@ -182,8 +221,14 @@
       "latitude": 18.559,
       "longitude": 73.8077,
       "listed_by": "owner",
-      "amenities": ["Lift", "Balcony", "24x7 Security"],
-      "images": [],
+      "amenities": [
+        "Lift",
+        "Balcony",
+        "24x7 Security"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1618221469555-7f3ad97540d6?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0008",
       "posted_at": "2026-09-08",
       "scraped_at": "2026-09-25T06:00:00+00:00"
@@ -206,8 +251,13 @@
       "latitude": 18.7355,
       "longitude": 73.6752,
       "listed_by": "owner",
-      "amenities": ["Lift", "Open Parking"],
-      "images": [],
+      "amenities": [
+        "Lift",
+        "Open Parking"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1606074280798-2dabb75ce10c?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0009",
       "posted_at": "2026-09-12",
       "scraped_at": "2026-09-25T06:00:00+00:00"
@@ -228,8 +278,14 @@
       "locality": "Viman Nagar",
       "city": "Pune",
       "listed_by": "owner",
-      "amenities": ["Lift", "Covered Parking", "Gym"],
-      "images": [],
+      "amenities": [
+        "Lift",
+        "Covered Parking",
+        "Gym"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0010",
       "posted_at": "2026-09-20",
       "scraped_at": "2026-09-25T06:00:00+00:00"
@@ -252,8 +308,14 @@
       "latitude": 18.5308,
       "longitude": 73.8478,
       "listed_by": "owner",
-      "amenities": ["Lift", "Power Backup", "24x7 Security"],
-      "images": [],
+      "amenities": [
+        "Lift",
+        "Power Backup",
+        "24x7 Security"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1675279200694-8529c73b1fd0?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0011",
       "posted_at": "2026-09-22",
       "scraped_at": "2026-09-25T06:00:00+00:00"
@@ -276,8 +338,14 @@
       "latitude": 18.484,
       "longitude": 73.899,
       "listed_by": "owner",
-      "amenities": ["Lift", "Covered Parking", "Balcony"],
-      "images": [],
+      "amenities": [
+        "Lift",
+        "Covered Parking",
+        "Balcony"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1689043528099-2ba014dd7c64?w=800&h=500&fit=crop&q=70"
+      ],
       "url": "https://www.nobroker.in/property/demo-0012",
       "posted_at": "2026-09-05",
       "scraped_at": "2026-09-25T06:00:00+00:00"

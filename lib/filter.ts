@@ -1,4 +1,5 @@
 import { NICE_TO_HAVE_TYPES, type Constraint, type Person } from './constraints'
+import { IMAGE_PREFIX } from './listings-source'
 
 /**
  * The filter engine. Plain code, no AI, and deterministic: the same three
@@ -122,8 +123,10 @@ function phrase(type: string, value: number | null): string {
  * flagged, so nobody visits a flat believing something nobody ever claimed.
  */
 function meets(listing: Listing, constraint: Constraint): boolean | null {
+  // Photo URLs live in extras too; they are never amenities.
+  const amenities = listing.extras.filter((e) => !e.startsWith(IMAGE_PREFIX))
   const has = (word: string) =>
-    listing.extras.some((e) => e.toLowerCase().includes(word)) ? true : false
+    amenities.some((e) => e.toLowerCase().includes(word)) ? true : false
 
   switch (constraint.type) {
     case 'lift':
@@ -143,7 +146,7 @@ function meets(listing: Listing, constraint: Constraint): boolean | null {
     case 'balcony':
       return has('balcony')
     case 'furnished':
-      return listing.extras.some((e) => e.toLowerCase() === 'furnished')
+      return amenities.some((e) => e.toLowerCase() === 'furnished')
     case 'gym':
       return has('gym')
     case 'power_backup':
@@ -335,4 +338,10 @@ export function tally(verdict: Verdict): { gets: Tally[]; givesUp: Tally[] } {
   }
 
   return { gets: count((v) => v.gets), givesUp: count((v) => v.givesUp) }
+}
+
+/** The listing's photo, if it came with one. */
+export function imageOf(listing: Listing): string | null {
+  const entry = listing.extras.find((e) => e.startsWith(IMAGE_PREFIX))
+  return entry ? entry.slice(IMAGE_PREFIX.length) : null
 }

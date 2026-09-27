@@ -1,5 +1,5 @@
 import { areaName } from '@/lib/areas'
-import { SHORTLIST_SIZE, tally, type Tally, type Shortlist } from '@/lib/filter'
+import { SHORTLIST_SIZE, imageOf, tally, type Tally, type Shortlist } from '@/lib/filter'
 
 const rupees = (n: number) => `₹${n.toLocaleString('en-IN')}`
 
@@ -77,8 +77,11 @@ export function Results({ result }: { result: Shortlist }) {
         {result.shortlist.map((verdict) => (
           <article
             key={verdict.listing.id}
-            className="flex flex-col gap-4 rounded-2xl border border-line p-5"
+            className="flex flex-col overflow-hidden rounded-2xl border border-line"
           >
+            <Photo url={imageOf(verdict.listing)} area={verdict.listing.area} />
+
+            <div className="flex flex-1 flex-col gap-4 p-5">
             <header>
               <p className="text-xl font-extrabold tracking-tight">
                 {verdict.listing.area ? areaName(verdict.listing.area) : 'Area not identified'}
@@ -112,6 +115,7 @@ export function Results({ result }: { result: Shortlist }) {
                 See the listing
               </a>
             )}
+            </div>
           </article>
         ))}
       </div>
@@ -168,6 +172,40 @@ function TradeOffs({ gets, givesUp }: { gets: Tally[]; givesUp: Tally[] }) {
           </ul>
         )}
       </div>
+    </div>
+  )
+}
+
+/**
+ * The listing photo. Demo flats carry Unsplash stock images and say so: those
+ * flats do not exist, so presenting a photo as if it were the place would be a
+ * small lie on a page whose whole point is not overstating what is known.
+ */
+function Photo({ url, area }: { url: string | null; area: string | null }) {
+  if (!url) {
+    return (
+      <div className="flex h-40 items-center justify-center bg-field text-sm font-semibold text-ink-faint">
+        No photo
+      </div>
+    )
+  }
+
+  const isStock = url.includes('images.unsplash.com')
+
+  return (
+    <div className="relative h-40 bg-field">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={area ? `A flat in ${areaName(area)}` : 'The flat'}
+        className="h-40 w-full object-cover"
+        loading="lazy"
+      />
+      {isStock && (
+        <span className="absolute bottom-2 right-2 rounded-full bg-ink/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+          Stock photo
+        </span>
+      )}
     </div>
   )
 }
