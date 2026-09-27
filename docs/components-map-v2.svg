@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1960" height="2116" viewBox="0 0 1960 2116" font-family="'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1960" height="1790" viewBox="0 0 1960 1790" font-family="'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif">
   <defs>
     <style>
       .col-title { font-size: 19px; font-weight: 800; fill: #ffffff; }
@@ -16,7 +16,7 @@
     </marker>
   </defs>
 
-  <rect width="1960" height="2116" fill="#ffffff"/>
+  <rect width="1960" height="1790" fill="#ffffff"/>
   <text x="40" y="52" class="h1">FlatSearch — components map, as built</text>
   <text x="40" y="78" class="t-small">27 September 2026. Supersedes components-map.png, which shows the original design. Where they differ, this one is what runs.</text>
 
@@ -165,34 +165,23 @@
   <text x="300" y="1360" class="t">and never picks. &#8220;New search&#8221; starts a fresh set of three blank forms.</text>
 
   <!-- limits panel -->
-  <rect x="40" y="1430" width="1880" height="626" rx="18" fill="#fdf3f5" stroke="#e0556e" stroke-width="2"/>
-  <text x="70" y="1472" class="h2">Why this cannot run itself: what it costs, and what it cannot promise</text>
+  <rect x="40" y="1430" width="1880" height="300" rx="18" fill="#fdf3f5" stroke="#e0556e" stroke-width="2"/>
+  <text x="70" y="1472" class="h2">Limits</text>
 
-  <text x="70" y="1510" class="t-strong">This was predicted at the outset, and building it confirmed the prediction.</text>
-  <text x="70" y="1532" class="t">The feasibility check answered &#8220;input available?&#8221; with PARTLY: each person&#8217;s constraints, yes &#8212; a form collects those. Listings, no. The major</text>
-  <text x="70" y="1552" class="t">Indian portals publish no open data feed, so the only route is scraping, which is fragile and generally against their terms. Everything below is</text>
-  <text x="70" y="1572" class="t">that missing feed showing up in practice. The constraint half of this app is solid; the listings half rests on a workaround.</text>
+  <text x="70" y="1512" class="t-strong">1 &#160;The feasibility check called this: input was PARTLY available.</text>
+  <text x="640" y="1512" class="t">Constraints yes, a form collects those. Listings no &#8212; the Indian portals publish no open feed.</text>
 
-  <text x="70" y="1596" class="t-strong">The live search costs money, every time.</text>
-  <text x="70" y="1618" class="t">Apify charges per run: about $0.045 for 15 listings — the advertised $1.50/1,000 results covers results, not the compute on top. The free tier is</text>
-  <text x="70" y="1638" class="t">$5 a month, so roughly 110 runs, then it stops. That is why the button states the cost and asks first, and why the free demo run exists beside it.</text>
+  <text x="70" y="1552" class="t-strong">2 &#160;It is a scraper, not an API.</text>
+  <text x="640" y="1552" class="t">No contract, no deprecation notice. The markup changes and it returns nothing, or shifted fields that still look right.</text>
 
-  <text x="70" y="1678" class="t-strong">It is not an API. It is a scraper reading someone else&#8217;s web page, and that is the harder limit.</text>
-  <text x="70" y="1700" class="t">There is no contract and no deprecation notice. MagicBricks can change its markup any morning and the actor returns nothing, or worse,</text>
-  <text x="70" y="1720" class="t">returns the wrong fields while still looking like it worked. It can be rate-limited or blocked outright as a bot. The actor is community-</text>
-  <text x="70" y="1740" class="t">maintained with no rating; if it breaks, someone else has to fix it, and until they do this app has no live source at all.</text>
+  <text x="70" y="1592" class="t-strong">3 &#160;The listings are not guaranteed true.</text>
+  <text x="640" y="1592" class="t">Let flats stay up, duplicates, brokers reposting. The first one pulled was from an agent, not an owner.</text>
 
-  <text x="70" y="1780" class="t-strong">The listings themselves are not guaranteed true.</text>
-  <text x="70" y="1802" class="t">Portal listings go stale: flats already let stay up, the same flat appears twice under different agents, and brokers repost to stay visible.</text>
-  <text x="70" y="1822" class="t">The first live listing this app pulled was posted by an agent, not an owner. The app cannot tell a real vacancy from a dead one &#8212; which is</text>
-  <text x="70" y="1842" class="t">why every card says &#8220;Confirm before visiting&#8221; and why the tool shortlists for a conversation rather than booking anything.</text>
+  <text x="70" y="1632" class="t-strong">4 &#160;Every run costs money.</text>
+  <text x="640" y="1632" class="t">About $0.045 for 15 listings, on a $5/month free tier &#8212; roughly 110 runs, then it stops.</text>
 
-  <text x="70" y="1882" class="t-strong">So unattended automation is off the table twice over.</text>
-  <text x="70" y="1904" class="t">Money is the easy half: at roughly 110 runs a month, a nightly job would exhaust the free tier and then simply stop. The harder half is that</text>
-  <text x="70" y="1924" class="t">nobody would notice it breaking. A scraper that silently returns nothing, or fields shifted by one, produces an empty or wrong shortlist that</text>
-  <text x="70" y="1944" class="t">still renders perfectly. Every run here is started by a person who is looking at the result, which is the only check this design actually has.</text>
+  <text x="70" y="1672" class="t-strong">5 &#160;So nothing runs unattended.</text>
+  <text x="640" y="1672" class="t">A nightly job would drain the tier, and nobody would notice it break. A person starting each run is the only check.</text>
 
-  <text x="70" y="1984" class="t-strong">And some gaps no amount of money closes.</text>
-  <text x="70" y="2006" class="t">MagicBricks returns amenities as internal numeric codes, so a lift, gym or power backup can never be read from it &#8212; every live flat is flagged</text>
-  <text x="70" y="2026" class="t">&#8220;not stated&#8221; rather than guessed. Photos are 180×240 with no larger version. The free demo run is the fallback when the live one fails.</text>
+  <text x="70" y="1706" class="t-small">Some gaps no budget closes: MagicBricks returns amenities as numeric codes, so a lift is never knowable from it &#8212; every live flat is flagged &#8220;not stated&#8221; rather than guessed.</text>
 </svg>
