@@ -108,8 +108,8 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
                 </p>
               )}
               <p className="mt-2 text-ink-soft">
-                Pull live rentals from a portal, or use the demo flats &mdash; stand-ins
-                with the same shape as scraped listings.
+                Search MagicBricks for live Pune rentals, or do a demo run on
+                built-in flats that have the same shape as scraped listings.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -119,18 +119,6 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
                   <input type="hidden" name="source" value="magicbricks" />
                   <button type="submit" className="btn-primary">
                     Search the internet · MagicBricks
-                  </button>
-                </form>
-                )}
-                {fetchState.state !== 'unavailable' && (
-                <form action={fetchLiveListingsAction}>
-                  <input type="hidden" name="searchId" value={id} />
-                  <input type="hidden" name="source" value="nobroker" />
-                  <button
-                    type="submit"
-                    className="rounded-full border border-line bg-field px-6 py-3.5 text-sm font-bold text-ink-soft transition hover:border-ink-faint hover:text-ink"
-                  >
-                    Search NoBroker instead
                   </button>
                 </form>
                 )}

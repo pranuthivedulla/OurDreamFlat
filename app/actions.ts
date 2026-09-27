@@ -100,7 +100,7 @@ export async function fetchLiveListingsAction(formData: FormData): Promise<void>
   const searchId = String(formData.get('searchId') ?? '')
   const source = String(formData.get('source') ?? '')
   if (!(await searchExists(searchId))) return
-  if (source !== 'magicbricks' && source !== 'nobroker') return
+  if (source !== 'magicbricks') return
   await startLiveFetch(searchId, source)
   revalidatePath(`/s/${searchId}`)
 }

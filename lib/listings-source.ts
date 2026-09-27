@@ -3,8 +3,8 @@ import demoData from '@/data/demo-listings.json'
 import { matchArea } from './geo'
 
 /**
- * One listing as the NoBroker Apify actor returns it
- * (thirdwatch/nobroker-scraper). Every field is optional because the actor
+ * One listing as the MagicBricks Apify actor returns it
+ * (thirdwatch/magicbricks-scraper). Every field is optional because the actor
  * omits fields it could not find -- that omission is the origin of every NULL
  * in our listings table, so it is modelled here rather than papered over.
  */
@@ -135,15 +135,12 @@ export function getDemoListings(): RawListing[] {
   return demoData.items as RawListing[]
 }
 
-/** The portals we can pull from. Both share the field names mapListing reads. */
+/** The portal we pull from. */
 export const ACTORS = {
   magicbricks: { id: 'thirdwatch~magicbricks-scraper', label: 'MagicBricks' },
-  nobroker: { id: 'thirdwatch~nobroker-scraper', label: 'NoBroker (owner-direct)' },
 } as const
 
 export type ListingSource = keyof typeof ACTORS
-
-export const APIFY_ACTOR = ACTORS.nobroker.id
 
 /**
  * Start a real Apify run. THIS SPENDS CREDITS -- it is the only function here
