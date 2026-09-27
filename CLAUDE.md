@@ -2,8 +2,8 @@
 
 Context for any session picking up this project. Read before changing anything.
 
-**Last updated 25 September 2026, after Phase 1 and Phase 2 were built and
-deployed.** This file describes what exists. Where it differs from
+**Last updated 27 September 2026, after live listings went in.** This file
+describes what exists. Where it differs from
 `docs/components-map.png`, this file is right and the map is out of date —
 see "Where this diverges from the original brief" for what changed and why.
 
@@ -32,8 +32,9 @@ This is a graded assessment. The submitted artifact is the working Vercel URL.
 
 - **Frontend + backend:** Next.js 16.3.6 (App Router, TypeScript, Tailwind) on Vercel
 - **Database:** Supabase (Postgres), RLS on with no policies
-- **Listings:** 12 demo flats in `data/demo-listings.json`, written in the exact
-  output shape of the Apify NoBroker actor. No live scraping runs yet.
+- **Listings:** either a live MagicBricks scrape through Apify, or 12 demo flats
+  in `data/demo-listings.json` written in that actor's exact output shape. Both
+  go through the same mapper and the same engine.
 - **AI:** none yet. Gemini Flash for the breakdown prose is Phase 3, unbuilt.
 - **Version control:** GitHub. Push at the end of every session.
 
@@ -53,8 +54,11 @@ are the reference — read them rather than writing Next 14 idioms from memory.
 4. **Status:** the same link shows "2 of 3 in. Waiting for Kavita." — names and
    booleans only. It **polls every 5 seconds** so a page left open on one phone
    notices a submission made on another, and stops polling once all three are in.
-5. **Listings:** once all three are in, a **Load the demo flats** button seeds
-   the 12 demo listings into this search.
+5. **Listings:** once all three are in, two buttons appear — **Search the
+   internet · MagicBricks** (a real Apify run, confirms the charge first) and
+   **Demo test run** (free, instant). They appear again under the results as
+   **Look again**, so a search that already has flats can be re-run without
+   filling in three forms again.
 6. **Processing:** `lib/filter.ts` applies the hard rules and ranks survivors.
    Plain code, no AI, deterministic.
 7. **Output:** the same link becomes the results page — up to 5 flats side by
@@ -108,9 +112,14 @@ exercises rule 6 by capping everyone at ₹7,000. No network, no database, no
 credits:
 
 ```bash
-npx tsx scripts/check-filter.ts
-npx tsx scripts/check-mapping.ts
+npx tsx scripts/check-filter.ts        # engine, determinism, the shortfall path
+npx tsx scripts/check-mapping.ts       # demo listings -> listings rows
+npx tsx scripts/check-live-mapping.ts  # a captured live sample -> listings rows
 ```
+
+`check-live-mapping.ts` reads `.live-sample.json`, a captured Apify dataset kept
+out of git. Recapture it from a finished run's dataset if you need it; reading a
+dataset costs nothing.
 
 ## Results page
 
@@ -125,38 +134,72 @@ npx tsx scripts/check-mapping.ts
 
 ## Listings
 
-`data/demo-listings.json` holds 12 fake Pune flats written in the **exact output
-shape of `thirdwatch/nobroker-scraper`**, so demo and live data map through the
-same `mapListing()`. Edge cases are deliberate: one with no lift stated, one
-with almost everything missing, one with no coordinates, one 17 km outside every
-area centroid, one far over any rent ceiling.
+Two sources, one mapper, one engine. `mapListing()` in `lib/listings-source.ts`
+turns either into a `listings` row, so nothing downstream knows or cares which
+one it came from.
 
-`lib/geo.ts` `matchArea()` resolves a listing to a canonical area by
-**coordinates first**, locality name only as a fallback, and `NULL` past a 6 km
-ceiling. Coordinates cannot be misspelt; guessing here would break area matching
-silently.
+**Live: `thirdwatch/magicbricks-scraper` on Apify.** `startApifyRun()` is the
+only function in this repo that spends money — about **4–5 US cents per run of
+15 listings**. The headline $1.50/1,000 covers results; compute units are
+charged on top, which is why the first estimate was low. Reading a run's state
+and its dataset costs nothing.
 
-`lib/listings-source.ts` `mapListing()` turns actor output into a listings row.
-**An amenity list is evidence of what a flat has, never evidence of what it
-lacks** — a listing that does not mention a lift maps to `NULL`, never `false`.
-Mapping absence to `false` would invent a fact the engine then drops a flat on.
+Runs take minutes, longer than a serverless request, so the flow is: the action
+starts the run and stores `apify_run_id` on the search; the status page polls it
+on each render (it re-renders itself every 5s) and ingests the dataset when the
+run succeeds, clearing the id so it cannot be ingested twice. `maxDuration = 60`
+on that route, because creating a run takes several seconds and the default
+budget killed it — that is what 500d production the first time the button was
+pressed.
 
-`startApifyRun()` exists and **nothing calls it**. The token is verified
-(`GET /users/me` → 200, free plan, $5/mo) but no actor has ever been started and
-no credits have been spent. Live scraping is a submission-day switch of source,
-not a rewrite.
+**What one real run taught us, none of which was in the actor's docs:**
 
-Apify has maintained actors for all three portals if more sources are ever
-wanted: `thirdwatch/nobroker-scraper`, `thirdwatch/acres99-scraper`,
-`thirdwatch/magicbricks-scraper`.
+- **`amenities` is internal numeric codes**, not names: `"12201 12202 12204…"`.
+  Lift, gym, power backup and 24x7 security therefore **cannot be read from
+  MagicBricks at all**. They map to NULL and the flat is flagged. The codes are
+  deliberately excluded from `extras`: a check that matches nothing while
+  looking like a working check is worse than no check.
+- **`parking` is free text** — `"1 Covered"`, `"2 Covered, 1 Open"`, or absent.
+  Recognised wording means yes; **anything unrecognised means not stated, never
+  no**, because `"None"` is a truthy string.
+- **`balconies` is a count**, so a balcony is a number rather than a word match.
+- **`furnishing`** is Furnished / Semi-Furnished / Unfurnished. "Unfurnished" is
+  a stated no, so `false` is legitimate there — unlike every other field.
+- **Localities do not match our list.** A live run returned Wanawari, NIBM Road,
+  Magarpatta City, Prabhat Road, Viman Nagar Central. **All 15 still resolved**,
+  by coordinates. This is what matching on position rather than spelling was
+  for; it is not an optimisation and should not be "simplified" to a name match.
+- **Photos are 180×240 and there is no larger variant** (`h360_w480` and
+  `h480_w640` both 404). Stretched across a card they look broken, so a photo is
+  shown sharp at its own size over a blurred fill of itself.
 
-**Do not use the Gemini API to scrape listings.** It can fetch URLs
+**Demo: `data/demo-listings.json`.** 12 fake Pune flats in the actor's exact
+output shape. Edge cases are deliberate: one with no lift stated, one with
+almost everything missing, one with no coordinates, one 17 km outside every area
+centroid, one far over any rent ceiling. Their photos are Unsplash stock and the
+card **says so** — those flats do not exist, so presenting a photo as the place
+would be a small lie on a page whose point is not overstating what is known.
+Live photos carry no such label.
+
+**The photo travels in `extras` behind an `img:` prefix**, not in its own
+column. That was to avoid a fourth migration that, unrun, would have broken
+inserts — see the migration lesson below. `IMAGE_PREFIX` entries are filtered
+out of amenity matching so a URL can never count as a gym.
+
+**Area matching** (`lib/geo.ts` `matchArea()`): coordinates first, locality name
+only as a fallback, `NULL` past a 6 km ceiling. Coordinates cannot be misspelt;
+guessing here would break area matching silently.
+
+**Never use the Gemini API to scrape listings.** It can fetch URLs
 (`url_context`, 20 per request) but it cannot walk a portal's search results,
 those pages are JS-rendered and bot-protected, and — fatally — a model asked for
 `has_lift` will answer. That fabricates at the point of ingestion, where nothing
-downstream can catch it, and it breaks rule 3 and the no-fabrication rule at
-once. Gemini's only job here is Phase 3 prose over facts the filter already
-computed.
+downstream can catch it. Gemini's only job here is Phase 3 prose over facts the
+filter already computed.
+
+Apify also has maintained actors for `thirdwatch/nobroker-scraper` and
+`thirdwatch/acres99-scraper` if more sources are ever wanted. NoBroker was wired
+up and then removed: it was never run, so nothing proven was lost.
 
 ## Data model
 
@@ -165,8 +208,11 @@ computed.
   no_go_areas (unused, kept), must_be_near (unused, kept), dealbreakers,
   nice_to_haves, submitted_at. Unique on (search_id, person) — that constraint
   is what locks a form, even against a replayed POST.
+- `searches` also carries `apify_run_id`, `apify_dataset_id` and
+  `listings_source`, added by migration 003, used to track a live run in flight.
 - `listings`: id, search_id, source, url, rent, area, floor, has_lift, parking,
-  bathrooms, pet_friendly, extras, added_at. **Unknown fields stay NULL.**
+  bathrooms, pet_friendly, extras, added_at. **Unknown fields stay NULL.** The
+  photo URL lives in `extras` behind an `img:` prefix.
 - `results`: created but unused — the shortlist is computed per request.
 
 `supabase/schema.sql` is the full schema and **starts with `drop table`**. Safe
@@ -181,7 +227,8 @@ additive pattern.
   so the public key can do nothing. Only the server, holding the secret key,
   reads anything.
 - `.env.local` holds `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (a `sb_secret_…` key,
-  Settings → API Keys) and `APIFY_TOKEN`. **None are `NEXT_PUBLIC_`** — anything
+  Settings → API Keys) and `APIFY_TOKEN`. All three are also set in Vercel; a
+  change there needs a redeploy to take effect. **None are `NEXT_PUBLIC_`** — anything
   with that prefix is inlined into the browser bundle. Same three in Vercel.
 - `.env*` was in `.gitignore` in the very first commit, before any key existed.
 - **There are no route handlers and no endpoint that returns a stored answer.**
@@ -208,11 +255,21 @@ must trace to a listing field that was actually populated.
 produce the same shortlist, in the same order. Every tie has an explicit
 tiebreak. `scripts/check-filter.ts` asserts this; keep it passing.
 
-**5. No secret reaches the browser.** See the security section. Before shipping
+**5. Never deploy code that assumes a migration has already run.** This broke
+production twice in one day. Either run the migration first, or make the code
+degrade — a missing column should switch a feature off, not 500 the page that
+holds the shortlist. `pollLiveFetch()` returns `unavailable` rather than
+throwing for exactly this reason.
+
+**6. Nothing that spends money happens on one click.** The status page is a
+public link. A live search states the cost and asks; the demo run does not,
+because it is free.
+
+**7. No secret reaches the browser.** See the security section. Before shipping
 anything that touches data access, `grep -r "SUPABASE" .next/static/` must be
 empty.
 
-**6. Grading and validation are yes/no, never a score.** A yes is checkable in
+**8. Grading and validation are yes/no, never a score.** A yes is checkable in
 five seconds; a 7/10 is not.
 
 ## Where this diverges from the original brief
@@ -240,6 +297,9 @@ stated at the time. `docs/components-map.png` still shows the original design.
   results out of date. Not built; "New search" is the reset.
 - **`data/pune-areas.json` moved to Phase 1**, because the form's area pickers
   read it.
+- **Listings arrive by scrape or demo button, not a paste-in form.** The brief's
+  MVP was a paste-in form for listings; it was never built. The Apify scraper it
+  listed as a stretch goal is what shipped instead.
 
 ## What was learned by building it
 
@@ -260,6 +320,27 @@ something exists.
 **Lint output piped through `tail` swallows the exit code**, so `npm run lint |
 tail && git commit` commits with lint errors. Check `${PIPESTATUS[0]}`.
 
+**Shipping a migration-dependent change broke production twice.** Once when the
+results page selected a column that did not exist, once when the live button
+did. Both were found by loading the page, not by reasoning about it. The rule
+above exists because of these.
+
+**Docs are a starting point, not the contract.** The MagicBricks actor's README
+describes `amenities` and `parking` in ways that would have produced confidently
+wrong data. One real run, inspected field by field, changed the mapper in four
+places. Run the thing and look at what comes back before writing code against
+a description of it.
+
+**Two confident diagnoses were wrong** and cost time: a missing `APIFY_TOKEN` on
+Vercel (it was there all along) and MagicBricks blocking hotlinked images (it
+does not — the check ran before lazy-loading had fetched them). Check before
+asserting a cause, especially when the check is cheap.
+
+**A shared constraint is one rule, not three.** The shortfall advice keyed
+blocks by person plus constraint, so a rule all three asked for counted three
+times and relaxing any one copy freed nothing — it reported "relaxing this
+brings back 0" and looked broken. Group by the constraint.
+
 **Ranking on the lowest per-person score visibly changes the answer.** In the
 worked example Baner is the best flat for Riya and leaves Kavita with almost
 nothing; Aundh ranks above it. That is the rule doing its job, and it is worth
@@ -277,10 +358,15 @@ keeping when someone proposes "just sort by total score".
 
 ## Status
 
-**Built and live:** Phase 1 (app, schema, private forms, status) and Phase 2
-(area matching, listing mapper, filter engine, results page), deployed and
-tested end to end on the production URL.
+**Built and live:** Phase 1 (app, schema, private forms, status), Phase 2 (area
+matching, listing mapper, filter engine, results page) and live MagicBricks
+listings, all deployed and run end to end on the production URL with real Pune
+data. Total Apify spend to date: **$0.09 across two runs**, of a $5/month free
+allowance.
+
+All three migrations have been run on the live database: `schema.sql`,
+`migration-002-preferred-areas.sql`, `migration-003-live-listings.sql`.
 
 **Not built:** Phase 3 (Gemini Flash prose over the template output, with a
 template fallback — the template path already works, so this is a layer on top
-of something that works). Live Apify runs. Any edit path.
+of something that works). Any edit path.
