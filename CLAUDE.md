@@ -244,8 +244,10 @@ additive pattern.
   so the public key can do nothing. Only the server, holding the secret key,
   reads anything.
 - `.env.local` holds `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (a `sb_secret_…` key,
-  Settings → API Keys) and `APIFY_TOKEN`. All three are also set in Vercel; a
-  change there needs a redeploy to take effect. **None are `NEXT_PUBLIC_`** — anything
+  Settings → API Keys) and `APIFY_TOKEN` (46 chars, `apify_api_…`). All three are
+  also set in Vercel; **a change there needs a redeploy to take effect**, and a
+  value with stray characters looks identical to a correct one in the dashboard
+  list — verify by revealing it, not by seeing the name. **None are `NEXT_PUBLIC_`** — anything
   with that prefix is inlined into the browser bundle. Same three in Vercel.
 - `.env*` was in `.gitignore` in the very first commit, before any key existed.
 - **There are no route handlers and no endpoint that returns a stored answer.**
@@ -348,10 +350,29 @@ wrong data. One real run, inspected field by field, changed the mapper in four
 places. Run the thing and look at what comes back before writing code against
 a description of it.
 
-**Two confident diagnoses were wrong** and cost time: a missing `APIFY_TOKEN` on
-Vercel (it was there all along) and MagicBricks blocking hotlinked images (it
-does not — the check ran before lazy-loading had fetched them). Check before
-asserting a cause, especially when the check is cheap.
+**Three confident diagnoses were wrong**, and the third cost the most. Live
+search failed on production for hours across three theories: a missing
+`APIFY_TOKEN` on Vercel (it was there), a serverless timeout (it was not), and
+only then the truth. The actual cause was **three stray characters appended to
+the token's value in Vercel** — the variable existed, looked right in the list,
+and returned `401 user-or-token-not-found` on every call. The same token in
+`.env.local` worked throughout, which is why it never failed locally.
+
+What found it was not reasoning. It was making the app print Apify's own error
+instead of a generic "could not be started". One click then gave the answer in
+full. **Surface the real error before theorising about the cause** — a server
+action that swallows its failure hides the one piece of information worth
+having, and a log nobody is watching is the same as no log.
+
+Two related traps, both live:
+
+- **A Vercel env var change needs a redeploy.** Editing the value changes what
+  future builds get; the running one keeps what it was given at build time.
+- **Check the value, not the variable's presence.** A wrong value and a missing
+  value look identical from the dashboard list.
+
+(The other wrong call: MagicBricks blocking hotlinked images. It does not — that
+check ran before lazy-loading had fetched them.)
 
 **A shared constraint is one rule, not three.** The shortfall advice keyed
 blocks by person plus constraint, so a rule all three asked for counted three
@@ -378,8 +399,9 @@ keeping when someone proposes "just sort by total score".
 **Built and live:** Phase 1 (app, schema, private forms, status), Phase 2 (area
 matching, listing mapper, filter engine, results page) and live MagicBricks
 listings, all deployed and run end to end on the production URL with real Pune
-data. Total Apify spend to date: **$0.09 across two runs**, of a $5/month free
-allowance.
+data. Total Apify spend to date: **$0.135 across three runs**, of a $5/month free
+allowance. The live button has been pressed successfully from production and
+returned real Pune listings.
 
 All three migrations have been run on the live database: `schema.sql`,
 `migration-002-preferred-areas.sql`, `migration-003-live-listings.sql`.
