@@ -12,6 +12,10 @@ import { getListings, getResponses, getStatus, pollLiveFetch } from '@/lib/db'
 import { buildShortlist } from '@/lib/filter'
 
 export const dynamic = 'force-dynamic'
+// Starting an Apify run and polling it both happen in this route's server
+// functions. The default serverless limit is short enough that creating a run
+// can be killed mid-flight, which is what 500d this page on production.
+export const maxDuration = 60
 
 function waitingLine(waitingFor: string[]): string {
   const names = waitingFor.map((p) => personName(p as never))

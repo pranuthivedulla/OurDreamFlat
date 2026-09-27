@@ -193,12 +193,20 @@ function Photo({ url, area }: { url: string | null; area: string | null }) {
   const isStock = url.includes('images.unsplash.com')
 
   return (
-    <div className="relative h-40 bg-field">
+    <div className="relative h-40 overflow-hidden bg-ink/5">
+      {/* MagicBricks only serves 180x240 thumbnails -- stretching one across
+          the card looks broken, so the photo stays sharp at its own size over
+          a blurred fill of itself. Large stock images look the same either way. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 scale-110 bg-cover bg-center blur-xl"
+        style={{ backgroundImage: `url("${url}")` }}
+      />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={url}
         alt={area ? `A flat in ${areaName(area)}` : 'The flat'}
-        className="h-40 w-full object-cover"
+        className="relative mx-auto h-full w-auto max-w-full object-contain"
         loading="lazy"
       />
       {isStock && (

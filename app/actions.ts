@@ -107,7 +107,10 @@ export async function fetchLiveListingsAction(formData: FormData): Promise<void>
   let failed = false
   try {
     await startLiveFetch(searchId, source)
-  } catch {
+  } catch (error) {
+    // Logged so the reason shows in the server logs; the page only needs to
+    // know that it failed and that nothing was charged.
+    console.error('live search failed:', error)
     failed = true
   }
 
