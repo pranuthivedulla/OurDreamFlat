@@ -104,44 +104,69 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
               <h2 className="text-2xl font-extrabold tracking-tight">No flats to filter yet</h2>
               {fetchState.state === 'failed' && (
                 <p className="mt-3 rounded-2xl bg-warn-bg p-4 text-sm font-medium text-warn-ink">
-                  That didn&rsquo;t work &mdash; {fetchState.why}. Try the other portal, or
-                  use the demo flats.
+                  That didn&rsquo;t work &mdash; {fetchState.why}. Try again, or use the
+                  demo flats.
                 </p>
               )}
               <p className="mt-2 text-ink-soft">
                 Search MagicBricks for live Pune rentals, or do a demo run on
                 built-in flats that have the same shape as scraped listings.
               </p>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                {fetchState.state !== 'unavailable' && (
-                  <LiveSearchButton action={fetchLiveListingsAction} searchId={id} />
-                )}
-                <form action={loadDemoListingsAction}>
-                  <input type="hidden" name="searchId" value={id} />
-                  <button
-                    type="submit"
-                    className={
-                      fetchState.state === 'unavailable'
-                        ? 'btn-primary'
-                        : 'rounded-full border border-line bg-field px-6 py-3.5 text-sm font-bold text-ink-soft transition hover:border-ink-faint hover:text-ink'
-                    }
-                  >
-                    Demo test run
-                  </button>
-                </form>
-              </div>
-              <p className="mt-3 text-xs text-ink-faint">
-                {fetchState.state === 'unavailable'
-                  ? 'Searching the internet is switched off until migration 003 has been run on the database.'
-                  : 'Searching the internet pulls 15 live Pune rentals and charges about 4–5 US cents of Apify credit each time. The demo test run uses 12 built-in flats and costs nothing.'}
-              </p>
+              <SourceChoice id={id} fetchState={fetchState} />
             </>
           ) : (
-            <Results result={buildShortlist(responses, listings)} />
+            <>
+              <Results result={buildShortlist(responses, listings)} />
+              {/* Repeated here so a search that already has flats can be run
+                  again -- otherwise the only way to switch from demo to live
+                  is to start a whole new search. */}
+              <div className="mt-8 border-t border-line pt-6">
+                <h3 className="font-extrabold tracking-tight">Look again</h3>
+                <p className="mt-1 text-sm text-ink-soft">
+                  Replace these flats with a fresh set. Your three forms stay as they are.
+                </p>
+                <SourceChoice id={id} fetchState={fetchState} />
+              </div>
+            </>
           )}
         </div>
       )}
     </main>
+  )
+}
+
+/** The two ways to fill a search with flats. Shown when it is empty, and again under the results. */
+function SourceChoice({
+  id,
+  fetchState,
+}: {
+  id: string
+  fetchState: { state: string }
+}) {
+  const liveOff = fetchState.state === 'unavailable'
+  return (
+    <>
+      <div className="mt-5 flex flex-wrap items-start gap-3">
+        {!liveOff && <LiveSearchButton action={fetchLiveListingsAction} searchId={id} />}
+        <form action={loadDemoListingsAction}>
+          <input type="hidden" name="searchId" value={id} />
+          <button
+            type="submit"
+            className={
+              liveOff
+                ? 'btn-primary'
+                : 'rounded-full border border-line bg-field px-6 py-3.5 text-sm font-bold text-ink-soft transition hover:border-ink-faint hover:text-ink'
+            }
+          >
+            Demo test run
+          </button>
+        </form>
+      </div>
+      <p className="mt-3 text-xs text-ink-faint">
+        {liveOff
+          ? 'Searching the internet is switched off until migration 003 has been run on the database.'
+          : 'Searching the internet pulls 15 live Pune rentals and charges about 4–5 US cents of Apify credit each time. The demo test run uses 12 built-in flats and costs nothing.'}
+      </p>
+    </>
   )
 }
