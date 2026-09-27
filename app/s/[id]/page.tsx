@@ -118,7 +118,7 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
                   <input type="hidden" name="searchId" value={id} />
                   <input type="hidden" name="source" value="magicbricks" />
                   <button type="submit" className="btn-primary">
-                    Fetch live flats · MagicBricks
+                    Search the internet · MagicBricks
                   </button>
                 </form>
                 )}
@@ -130,7 +130,7 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
                     type="submit"
                     className="rounded-full border border-line bg-field px-6 py-3.5 text-sm font-bold text-ink-soft transition hover:border-ink-faint hover:text-ink"
                   >
-                    NoBroker instead
+                    Search NoBroker instead
                   </button>
                 </form>
                 )}
@@ -144,14 +144,14 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
                         : 'rounded-full border border-line bg-field px-6 py-3.5 text-sm font-bold text-ink-soft transition hover:border-ink-faint hover:text-ink'
                     }
                   >
-                    Use demo flats
+                    Demo test run
                   </button>
                 </form>
               </div>
               <p className="mt-3 text-xs text-ink-faint">
                 {fetchState.state === 'unavailable'
-                  ? 'Live fetching is switched off until migration 003 has been run on the database.'
-                  : 'A live fetch pulls 15 listings and costs a few pence of Apify credit. The demo flats cost nothing.'}
+                  ? 'Searching the internet is switched off until migration 003 has been run on the database.'
+                  : 'Searching the internet pulls 15 live Pune rentals and charges about 4–5 US cents of Apify credit each time. The demo test run uses 12 built-in flats and costs nothing.'}
               </p>
             </>
           ) : (
