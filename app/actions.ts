@@ -101,6 +101,17 @@ export async function fetchLiveListingsAction(formData: FormData): Promise<void>
   const source = String(formData.get('source') ?? '')
   if (!(await searchExists(searchId))) return
   if (source !== 'magicbricks') return
-  await startLiveFetch(searchId, source)
+
+  // A missing token or an Apify outage must not take the page down with it --
+  // the shortlist that is already on screen is the thing being submitted.
+  let failed = false
+  try {
+    await startLiveFetch(searchId, source)
+  } catch {
+    failed = true
+  }
+
   revalidatePath(`/s/${searchId}`)
+  // redirect throws by design, so it stays outside the try.
+  if (failed) redirect(`/s/${searchId}?livefetch=failed`)
 }

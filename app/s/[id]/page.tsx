@@ -20,8 +20,15 @@ function waitingLine(waitingFor: string[]): string {
   return `Waiting for ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}.`
 }
 
-export default async function SearchPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SearchPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ livefetch?: string }>
+}) {
   const { id } = await params
+  const { livefetch } = await searchParams
   const status = await getStatus(id)
   if (!status) notFound()
 
@@ -91,6 +98,12 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
 
       {done === total && (
         <div className="card mt-6 p-6 sm:p-10">
+          {livefetch === 'failed' && (
+            <p className="mb-6 rounded-2xl bg-warn-bg p-4 text-sm font-medium text-warn-ink">
+              The live search could not be started, so nothing was charged. The flats
+              below are unchanged. A demo run always works.
+            </p>
+          )}
           {fetchState.state === 'running' ? (
             <>
               <h2 className="text-2xl font-extrabold tracking-tight">Fetching flats…</h2>
