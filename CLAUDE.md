@@ -3,7 +3,9 @@
 Context for any session picking up this project. Read before changing anything.
 
 **Last updated 27 September 2026, after live listings went in.** This file
-describes what exists. Where it differs from
+describes what exists. `docs/components-map-v2.svg` is the matching diagram;
+`docs/components-map.png` is the original brief's design, kept as the record of
+what this was measured against. Where it differs from
 `docs/components-map.png`, this file is right and the map is out of date —
 see "Where this diverges from the original brief" for what changed and why.
 

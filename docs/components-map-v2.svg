@@ -1,0 +1,183 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1960" height="1810" viewBox="0 0 1960 1810" font-family="'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif">
+  <defs>
+    <style>
+      .col-title { font-size: 19px; font-weight: 800; fill: #ffffff; }
+      .lane { font-size: 18px; font-weight: 800; fill: #ffffff; }
+      .lane-sub { font-size: 13px; font-weight: 500; fill: #8b97ab; }
+      .t { font-size: 14px; fill: #17131b; }
+      .t-strong { font-size: 14px; font-weight: 700; fill: #17131b; }
+      .t-small { font-size: 12.5px; fill: #5c6473; }
+      .badge { font-size: 12px; font-weight: 800; fill: #ffffff; letter-spacing: .06em; }
+      .h1 { font-size: 30px; font-weight: 800; fill: #17131b; }
+      .h2 { font-size: 16px; font-weight: 800; fill: #17131b; }
+    </style>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#6b7180"/>
+    </marker>
+  </defs>
+
+  <rect width="1960" height="1810" fill="#ffffff"/>
+  <text x="40" y="52" class="h1">FlatSearch — components map, as built</text>
+  <text x="40" y="78" class="t-small">27 September 2026. Supersedes components-map.png, which shows the original design. Where they differ, this one is what runs.</text>
+
+  <!-- column header bar -->
+  <rect x="0" y="100" width="1960" height="58" fill="#17131b"/>
+  <text x="24" y="136" class="col-title">Actor</text>
+  <text x="286" y="136" class="col-title">Trigger</text>
+  <text x="566" y="136" class="col-title">Input</text>
+  <text x="846" y="136" class="col-title">Context</text>
+  <text x="1126" y="136" class="col-title">Processing</text>
+  <text x="1406" y="136" class="col-title">AI</text>
+  <text x="1686" y="136" class="col-title">Output</text>
+
+  <!-- actor sidebar -->
+  <rect x="0" y="158" width="250" height="1290" fill="#17131b"/>
+
+  <!-- lane labels -->
+  <text x="24" y="210" class="lane">Riya</text><text x="24" y="232" class="lane-sub">Co-ordinator</text>
+  <text x="24" y="330" class="lane">Web app</text><text x="24" y="352" class="lane-sub">Next.js 16 on Vercel</text>
+  <text x="24" y="490" class="lane">Riya, Meera,</text><text x="24" y="514" class="lane">Kavita</text><text x="24" y="536" class="lane-sub">Each alone</text>
+  <text x="24" y="670" class="lane">Supabase</text><text x="24" y="692" class="lane-sub">Postgres · RLS on</text>
+  <text x="24" y="820" class="lane">Listings</text><text x="24" y="844" class="lane-sub">Two sources, one mapper</text>
+  <text x="24" y="1090" class="lane">Filter engine</text><text x="24" y="1112" class="lane-sub">Plain code · no AI</text>
+  <text x="24" y="1270" class="lane">AI</text><text x="24" y="1292" class="lane-sub">Not used</text>
+
+  <!-- row separators -->
+  <g stroke="#e8eaf0" stroke-width="1">
+    <line x1="250" y1="270" x2="1960" y2="270"/>
+    <line x1="250" y1="430" x2="1960" y2="430"/>
+    <line x1="250" y1="610" x2="1960" y2="610"/>
+    <line x1="250" y1="740" x2="1960" y2="740"/>
+    <line x1="250" y1="1040" x2="1960" y2="1040"/>
+    <line x1="250" y1="1210" x2="1960" y2="1210"/>
+  </g>
+
+  <!-- 1. Riya triggers -->
+  <rect x="280" y="180" width="250" height="76" rx="14" fill="#eef0fe" stroke="#4f56e5" stroke-width="1.5"/>
+  <text x="298" y="208" class="t-strong">Opens the app</text>
+  <text x="298" y="230" class="t">Clicks &#8220;Start a new search&#8221;</text>
+  <text x="298" y="248" class="t-small">Shares the link herself</text>
+
+  <!-- 2. Web app creates search -->
+  <rect x="280" y="290" width="250" height="122" rx="14" fill="#e9f7f1" stroke="#0f9d6f" stroke-width="1.5"/>
+  <text x="298" y="318" class="t-strong">Creates the search</text>
+  <text x="298" y="340" class="t">Short token, e.g. /s/9u8t3k</text>
+  <text x="298" y="362" class="t">Copy link · WhatsApp</text>
+  <text x="298" y="384" class="t-small">wa.me link, message pre-typed;</text>
+  <text x="298" y="402" class="t-small">she still picks the chat and sends</text>
+
+  <!-- 3. the form -->
+  <rect x="560" y="450" width="250" height="144" rx="14" fill="#eef0fe" stroke="#4f56e5" stroke-width="1.5"/>
+  <text x="578" y="478" class="t-strong">Her form, four steps</text>
+  <text x="578" y="500" class="t">1 Budget — slider to ₹80,000</text>
+  <text x="578" y="520" class="t">2 Preferred zones (5, not 20)</text>
+  <text x="578" y="540" class="t">3 Each need: dealbreaker /</text>
+  <text x="578" y="558" class="t">   preferred / don&#8217;t care</text>
+  <text x="578" y="578" class="t">4 Check and send → locks</text>
+
+  <!-- 4. Supabase -->
+  <rect x="840" y="628" width="250" height="100" rx="14" fill="#e9f7f1" stroke="#0f9d6f" stroke-width="1.5"/>
+  <text x="858" y="656" class="t-strong">Stores all three privately</text>
+  <text x="858" y="678" class="t">No page ever returns an answer</text>
+  <text x="858" y="700" class="t">Max 3 dealbreakers enforced</text>
+  <text x="858" y="718" class="t-small">in the UI and again on the server</text>
+
+  <!-- 5a. APIFY — highlighted -->
+  <rect x="836" y="756" width="258" height="188" rx="16" fill="#fff8e8" stroke="#e0556e" stroke-width="3"/>
+  <rect x="836" y="756" width="258" height="30" rx="16" fill="#e0556e"/>
+  <rect x="836" y="772" width="258" height="14" fill="#e0556e"/>
+  <text x="850" y="777" class="badge">⚠ CHARGEABLE — APIFY</text>
+  <text x="854" y="814" class="t-strong">Search the internet</text>
+  <text x="854" y="836" class="t">thirdwatch/magicbricks-scraper</text>
+  <text x="854" y="858" class="t">15 live Pune rentals per run</text>
+  <text x="854" y="882" class="t-strong">≈ $0.045 a run</text>
+  <text x="854" y="902" class="t-small">Asks before spending. Run takes</text>
+  <text x="854" y="920" class="t-small">1–2 min; the page polls and</text>
+  <text x="854" y="938" class="t-small">ingests when it finishes.</text>
+
+  <!-- 5b. demo -->
+  <rect x="840" y="962" width="250" height="66" rx="14" fill="#e9f7f1" stroke="#0f9d6f" stroke-width="1.5"/>
+  <text x="858" y="990" class="t-strong">Demo test run — free</text>
+  <text x="858" y="1012" class="t">12 built-in flats, same shape</text>
+
+  <!-- mapper, sits between source and engine -->
+  <rect x="1120" y="756" width="250" height="140" rx="14" fill="#fff8e8" stroke="#e5a83a" stroke-width="1.5"/>
+  <text x="1138" y="784" class="t-strong">mapListing()</text>
+  <text x="1138" y="806" class="t">Area by coordinates, not name</text>
+  <text x="1138" y="828" class="t">Anything not stated → NULL</text>
+  <text x="1138" y="850" class="t-small">Never false. MagicBricks returns</text>
+  <text x="1138" y="868" class="t-small">amenities as numeric codes, so a</text>
+  <text x="1138" y="886" class="t-small">lift is never knowable from it.</text>
+
+  <!-- 7. filter engine -->
+  <rect x="1120" y="1058" width="250" height="142" rx="14" fill="#fff8e8" stroke="#e5a83a" stroke-width="1.5"/>
+  <text x="1138" y="1086" class="t-strong">Hard rules, then rank</text>
+  <text x="1138" y="1108" class="t">Rent ceiling = 3 × lowest cap</text>
+  <text x="1138" y="1130" class="t">Anyone&#8217;s dealbreaker drops it</text>
+  <text x="1138" y="1152" class="t">NULL = kept and flagged</text>
+  <text x="1138" y="1174" class="t">Worst-off person sorted first</text>
+  <text x="1138" y="1192" class="t-small">Deterministic. Keeps top 5.</text>
+
+  <!-- 8. AI lane -->
+  <rect x="1400" y="1058" width="250" height="118" rx="14" fill="#f4f5f8" stroke="#9aa0ae" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="1418" y="1086" class="t-strong">No AI in the shortlist</text>
+  <text x="1418" y="1108" class="t">The engine is plain code, so the</text>
+  <text x="1418" y="1128" class="t">same answers always give the</text>
+  <text x="1418" y="1148" class="t">same five flats.</text>
+  <text x="1418" y="1168" class="t-small">Gemini prose: designed, not built.</text>
+
+  <!-- 6. output: status -->
+  <rect x="1680" y="290" width="250" height="122" rx="14" fill="#e9f7f1" stroke="#0f9d6f" stroke-width="1.5"/>
+  <text x="1698" y="318" class="t-strong">Same link, before</text>
+  <text x="1698" y="340" class="t">&#8220;2 of 3 in.</text>
+  <text x="1698" y="360" class="t">Waiting for Kavita.&#8221;</text>
+  <text x="1698" y="384" class="t-small">Names and nothing else.</text>
+  <text x="1698" y="402" class="t-small">Refreshes itself every 5s.</text>
+
+  <!-- output: results -->
+  <rect x="1680" y="1058" width="250" height="166" rx="14" fill="#e9f7f1" stroke="#0f9d6f" stroke-width="1.5"/>
+  <text x="1698" y="1086" class="t-strong">Same link, after</text>
+  <text x="1698" y="1108" class="t">5 Shortlisted Properties</text>
+  <text x="1698" y="1130" class="t">Side by side, no winner</text>
+  <text x="1698" y="1152" class="t-strong">Counts, never names</text>
+  <text x="1698" y="1172" class="t-small">&#8220;One of you gives up a balcony&#8221;</text>
+  <text x="1698" y="1194" class="t">⚠ Confirm before visiting flags</text>
+  <text x="1698" y="1216" class="t-small">Photo: portal&#8217;s own, or stock</text>
+
+  <!-- flow arrows -->
+  <g stroke="#6b7180" stroke-width="1.6" fill="none" marker-end="url(#arrow)" stroke-dasharray="6 5">
+    <path d="M405,258 L405,288"/>
+    <path d="M530,352 L680,352 L680,448"/>
+    <path d="M810,520 L960,520 L960,626"/>
+    <path d="M1090,678 L1105,678 L1105,1120 L1118,1120"/>
+    <path d="M1094,850 L1118,850"/>
+    <path d="M1090,995 L1105,995 L1105,860 L1118,860"/>
+    <path d="M1245,896 L1245,1056"/>
+    <path d="M1370,1129 L1398,1129"/>
+    <path d="M1650,1129 L1678,1129"/>
+    <path d="M1805,412 L1805,1056"/>
+  </g>
+
+  <!-- human gate -->
+  <rect x="270" y="1270" width="1660" height="108" rx="16" fill="#fff8e8" stroke="#e5a83a" stroke-width="2.5" stroke-dasharray="10 6"/>
+  <text x="300" y="1310" class="h2">HUMAN GATE — nothing leaves the tool as a decision</text>
+  <text x="300" y="1338" class="t">The three of them read the five, argue, and choose. The app shortlists and flags; it never ranks on screen, never names who compromised,</text>
+  <text x="300" y="1360" class="t">and never picks. &#8220;New search&#8221; starts a fresh set of three blank forms.</text>
+
+  <!-- limits panel -->
+  <rect x="40" y="1430" width="1880" height="330" rx="18" fill="#fdf3f5" stroke="#e0556e" stroke-width="2"/>
+  <text x="70" y="1472" class="h2">Where this stops being free, and stops being automatic</text>
+
+  <text x="70" y="1510" class="t-strong">The live search costs money, every time.</text>
+  <text x="70" y="1532" class="t">Apify charges per run: about $0.045 for 15 listings — the advertised $1.50/1,000 results covers results, not the compute on top. The free tier is</text>
+  <text x="70" y="1552" class="t">$5 a month, so roughly 110 runs, then it stops. That is why the button states the cost and asks first, and why the free demo run exists beside it.</text>
+
+  <text x="70" y="1592" class="t-strong">So a fully automatic agent is not possible here, and that is a money problem before it is a technical one.</text>
+  <text x="70" y="1614" class="t">Nothing schedules itself, re-runs nightly, or widens the search on its own: every attempt would spend someone&#8217;s credit without being asked.</text>
+  <text x="70" y="1634" class="t">A person decides when to spend, on a public link that anyone holding it could otherwise click.</text>
+
+  <text x="70" y="1674" class="t-strong">And the data itself is limited.</text>
+  <text x="70" y="1696" class="t">MagicBricks returns amenities as internal numeric codes, so a lift, gym or power backup can never be read from it — every live flat is flagged</text>
+  <text x="70" y="1716" class="t">&#8220;not stated&#8221; rather than guessed. Photos are 180×240 with no larger version. The scraper is community-maintained with no rating, so it can</text>
+  <text x="70" y="1736" class="t">break whenever the portal changes. The demo run is the fallback when it does.</text>
+</svg>
