@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 
 import { fetchLiveListingsAction, loadDemoListingsAction } from '@/app/actions'
 import { AutoRefresh } from '@/app/components/auto-refresh'
+import { LiveSearchButton } from '@/app/components/live-search-button'
 import { CopyLink } from '@/app/components/copy-link'
 import { Results } from '@/app/components/results'
 import { PEOPLE, personName } from '@/lib/constraints'
@@ -114,13 +115,7 @@ export default async function SearchPage({ params }: { params: Promise<{ id: str
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {fetchState.state !== 'unavailable' && (
-                <form action={fetchLiveListingsAction}>
-                  <input type="hidden" name="searchId" value={id} />
-                  <input type="hidden" name="source" value="magicbricks" />
-                  <button type="submit" className="btn-primary">
-                    Search the internet · MagicBricks
-                  </button>
-                </form>
+                  <LiveSearchButton action={fetchLiveListingsAction} searchId={id} />
                 )}
                 <form action={loadDemoListingsAction}>
                   <input type="hidden" name="searchId" value={id} />
