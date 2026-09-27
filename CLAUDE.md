@@ -140,6 +140,24 @@ Two sources, one mapper, one engine. `mapListing()` in `lib/listings-source.ts`
 turns either into a `listings` row, so nothing downstream knows or cares which
 one it came from.
 
+**This is a scraper, not an API, and that is the binding limit.** There is no
+contract and no deprecation notice: MagicBricks can change its markup any
+morning and the actor returns nothing — or worse, returns shifted fields while
+still looking like it worked, producing a perfect-looking shortlist built on
+rubbish. Runs can be rate-limited or blocked as bot traffic. The actor is
+community-maintained with no rating; if it breaks, someone else has to fix it.
+And portal listings are not guaranteed true: flats already let stay up, the
+same flat appears twice under different agents, and brokers repost to stay
+visible. The first live listing this app pulled was `listed_by: "agent"`, not
+an owner. This is why every card says "Confirm before visiting" and why the
+demo run exists as a fallback.
+
+**Nothing runs unattended, for two separate reasons.** Cost is the easy one: at
+~110 runs a month a nightly job would exhaust the free tier and stop. The
+harder one is that **nobody would notice it breaking** — a person starting each
+run and looking at the result is the only check this design has. Do not add a
+schedule, a retry loop, or an agent that widens the search on its own.
+
 **Live: `thirdwatch/magicbricks-scraper` on Apify.** `startApifyRun()` is the
 only function in this repo that spends money — about **4–5 US cents per run of
 15 listings**. The headline $1.50/1,000 covers results; compute units are
