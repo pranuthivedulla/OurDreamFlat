@@ -104,17 +104,18 @@ export async function fetchLiveListingsAction(formData: FormData): Promise<void>
 
   // A missing token or an Apify outage must not take the page down with it --
   // the shortlist that is already on screen is the thing being submitted.
-  let failed = false
+  let why = ''
   try {
     await startLiveFetch(searchId, source)
   } catch (error) {
-    // Logged so the reason shows in the server logs; the page only needs to
-    // know that it failed and that nothing was charged.
     console.error('live search failed:', error)
-    failed = true
+    // Carried to the page so a failure can be diagnosed from the browser
+    // rather than from server logs nobody is watching. Truncated, and the
+    // token never appears in these messages.
+    why = (error instanceof Error ? error.message : String(error)).slice(0, 160)
   }
 
   revalidatePath(`/s/${searchId}`)
   // redirect throws by design, so it stays outside the try.
-  if (failed) redirect(`/s/${searchId}?livefetch=failed`)
+  if (why) redirect(`/s/${searchId}?livefetch=failed&why=${encodeURIComponent(why)}`)
 }

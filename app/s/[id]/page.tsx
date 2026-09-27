@@ -29,10 +29,10 @@ export default async function SearchPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ livefetch?: string }>
+  searchParams: Promise<{ livefetch?: string; why?: string }>
 }) {
   const { id } = await params
-  const { livefetch } = await searchParams
+  const { livefetch, why } = await searchParams
   const status = await getStatus(id)
   if (!status) notFound()
 
@@ -103,10 +103,13 @@ export default async function SearchPage({
       {done === total && (
         <div className="card mt-6 p-6 sm:p-10">
           {livefetch === 'failed' && (
-            <p className="mb-6 rounded-2xl bg-warn-bg p-4 text-sm font-medium text-warn-ink">
-              The live search could not be started, so nothing was charged. The flats
-              below are unchanged. A demo run always works.
-            </p>
+            <div className="mb-6 rounded-2xl bg-warn-bg p-4 text-sm font-medium text-warn-ink">
+              <p>
+                The live search could not be started, so nothing was charged. The flats
+                below are unchanged. A demo run always works.
+              </p>
+              {why && <p className="mt-2 font-normal opacity-80">Reason: {why}</p>}
+            </div>
           )}
           {fetchState.state === 'running' ? (
             <>
