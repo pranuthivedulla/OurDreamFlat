@@ -186,6 +186,12 @@ pressed.
   Magarpatta City, Prabhat Road, Viman Nagar Central. **All 15 still resolved**,
   by coordinates. This is what matching on position rather than spelling was
   for; it is not an optimisation and should not be "simplified" to a name match.
+- **There is no per-rental link.** The `url` field carries a `pdpid` that only
+  ever resolves to the society or builder project page — never the individual
+  rental. Appending the id as a query parameter lands on an unrelated city
+  page. So the card says "Open the society on MagicBricks", not "see the
+  listing": the click cannot deliver what that would promise. Demo flats have
+  no real page at all and get no link.
 - **Photos are 180×240 and there is no larger variant** (`h360_w480` and
   `h480_w640` both 404). Stretched across a card they look broken, so a photo is
   shown sharp at its own size over a blurred fill of itself.

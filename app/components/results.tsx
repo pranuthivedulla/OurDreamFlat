@@ -105,14 +105,18 @@ export function Results({ result }: { result: Shortlist }) {
 
             <TradeOffs {...tally(verdict)} />
 
-            {verdict.listing.url && (
+            {/* MagicBricks' feed carries no per-rental link: its id only ever
+                resolves to the society page. Saying "see the listing" would
+                promise something the click does not deliver. Demo flats have
+                no real page at all, so they get no link. */}
+            {verdict.listing.url && !verdict.listing.url.includes('/demo-') && (
               <a
                 href={verdict.listing.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-auto text-sm font-bold text-accent"
               >
-                See the listing
+                Open the society on MagicBricks &rarr;
               </a>
             )}
             </div>
@@ -125,7 +129,9 @@ export function Results({ result }: { result: Shortlist }) {
         breaking someone&rsquo;s dealbreaker or the shared rent ceiling &middot;{' '}
         {result.passedCount} cleared everything, and the {result.shortlist.length} that
         suit all three of you best are shown. Anything marked &ldquo;not stated&rdquo; was
-        kept and flagged, never assumed.
+        kept and flagged, never assumed. MagicBricks publishes no direct link to an
+        individual rental, so the link opens the society page &mdash; search the rent
+        there to reach the flat itself.
       </p>
     </div>
   )
