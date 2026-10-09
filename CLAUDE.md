@@ -131,6 +131,10 @@ dataset costs nothing.
   balcony", not "Meera gives up a balcony". Naming who compromised turns a
   shared decision into a record of who owes whom. See the divergence section.
 - Flags ("⚠️ Confirm before visiting: parking not stated") appear per flat.
+- **The card links to the society page, not the rental**, and says so: "Open the
+  society on MagicBricks". The feed has no per-rental link (see Listings), and
+  "see the listing" would promise something the click cannot deliver. A listing
+  with no url, and every demo flat, gets no link rather than a dead one.
 - Forms lock on submit. There is no edit path: **"New search" is the reset**,
   and it produces three blank forms at a fresh token. Old links keep working.
 
